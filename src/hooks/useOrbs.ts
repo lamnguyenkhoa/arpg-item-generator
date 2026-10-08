@@ -31,5 +31,5 @@ export function useOrbs() {
     setOrbs((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) - 1) }));
   }, []);
 
-  return { orbs, addOrb, spendOrb };
+  return { orbs, addOrb, spendOrb, replaceAll: setOrbs };
 }

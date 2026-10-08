@@ -1,7 +1,10 @@
 import type { SaveSlots } from '../hooks/useSaves.ts';
+import { averageItemLevel } from '../lib/progression.ts';
 
 interface Props {
   slots: SaveSlots;
+  /** False when there's no game in progress to save. */
+  canSave: boolean;
   onSave: (index: number) => void;
   onLoad: (index: number) => void;
   onDelete: (index: number) => void;
@@ -10,7 +13,7 @@ interface Props {
 const formatDate = (ms: number) =>
   new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
-export function SavePanel({ slots, onSave, onLoad, onDelete }: Props) {
+export function SavePanel({ slots, canSave, onSave, onLoad, onDelete }: Props) {
   return (
     <aside className="panel saves">
       <h3>Save Slots</h3>
@@ -24,7 +27,7 @@ export function SavePanel({ slots, onSave, onLoad, onDelete }: Props) {
                 <span className="save-label">{label}</span>
                 {save ? (
                   <span className="save-meta">
-                    {itemCount} equipped · {formatDate(save.savedAt)}
+                    {itemCount} equipped · Avg ilvl {averageItemLevel(save.equipment)} · {formatDate(save.savedAt)}
                   </span>
                 ) : (
                   <span className="save-meta muted">Empty</span>
@@ -33,6 +36,7 @@ export function SavePanel({ slots, onSave, onLoad, onDelete }: Props) {
               <div className="save-actions">
                 <button
                   type="button"
+                  disabled={!canSave}
                   onClick={() => {
                     if (!save || confirm(`Overwrite ${label}?`)) onSave(i);
                   }}

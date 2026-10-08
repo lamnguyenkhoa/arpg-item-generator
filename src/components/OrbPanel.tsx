@@ -14,7 +14,7 @@ export function OrbPanel({ orbs, lastDrop, armed, onArm }: Props) {
     <div className="orbs">
       {ORBS.map((orb) => {
         const count = orbs[orb.id] ?? 0;
-        const justDropped = lastDrop?.orb.id === orb.id;
+        const justDropped = !!lastDrop?.orbs.some((o) => o.id === orb.id);
         const isArmed = armed === orb.id;
         return (
           <button
@@ -29,7 +29,7 @@ export function OrbPanel({ orbs, lastDrop, armed, onArm }: Props) {
             <span className="orb-icon" />
             {orb.name}{' '}
             {/* Re-keyed on each drop so the count bump animation replays. */}
-            <span key={justDropped ? lastDrop.key : 'idle'} className={`orb-count${justDropped ? ' bump' : ''}`}>
+            <span key={justDropped && lastDrop ? lastDrop.key : 'idle'} className={`orb-count${justDropped ? ' bump' : ''}`}>
               {count}
             </span>
           </button>

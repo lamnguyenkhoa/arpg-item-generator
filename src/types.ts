@@ -124,15 +124,17 @@ export interface SaveData {
   savedAt: number;
   equipment: Equipment;
   currentItem: Item;
+  /** Orb counts at save time. Missing in saves made before orbs were saved. */
+  orbs?: OrbCounts;
 }
 
-export type OrbId = 'exalted' | 'vaal' | 'chaos' | 'divine';
+export type OrbId = 'exalted' | 'regal' | 'vaal' | 'chaos' | 'divine';
 
 export interface OrbDef {
   id: OrbId;
   name: string;
-  /** Relative chance of this orb when an orb drops. */
-  weight: number;
+  /** Chance to drop from a skipped Normal item; multiplied for rarer items (see ORB_RARITY_MULTIPLIER). */
+  dropChance: number;
   /** What the orb does, shown in its tooltip and while it's picked up. */
   description: string;
 }
@@ -140,7 +142,8 @@ export interface OrbDef {
 export type OrbCounts = Partial<Record<OrbId, number>>;
 
 export interface OrbDrop {
-  orb: OrbDef;
+  /** Every orb that dropped from one item, most common first. */
+  orbs: OrbDef[];
   /** Unique per drop, used to replay the drop animation. */
   key: number;
 }

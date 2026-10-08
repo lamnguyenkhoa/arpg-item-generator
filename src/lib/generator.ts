@@ -80,6 +80,8 @@ export function addRandomAffix(item: Item): Item {
   return { ...item, [kind]: [...item[kind], rollAffix(pick(defs), item.itemLevel)] };
 }
 
+export const rareName = (): string => `${pick(RARE_FIRST)} ${pick(RARE_SECOND)}`;
+
 /** Magic item name: "<first prefix> <base> <first suffix>". */
 export const magicName = (baseName: string, prefixes: RolledMod[], suffixes: RolledMod[]): string =>
   [prefixes[0]?.name, baseName, suffixes[0]?.name].filter(Boolean).join(' ');
@@ -105,7 +107,7 @@ export function generateItem({ itemRarity = 0, levelRange = [1, MAX_ITEM_LEVEL] 
   let name: string;
   switch (rarity.id) {
     case 'rare':
-      name = `${pick(RARE_FIRST)} ${pick(RARE_SECOND)}`;
+      name = rareName();
       break;
     case 'magic':
       name = magicName(base.name, prefixes, suffixes);

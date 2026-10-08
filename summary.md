@@ -16,7 +16,7 @@ npm run build        # data check + type check + production build
 2. **Compare.** The rolled item is shown next to what you have equipped in that slot. Below the cards, an "If equipped" list shows every stat that would change.
 3. **Equip or skip.** Equip the item into a slot, or reroll past it. Skipping an item you didn't equip can drop a currency orb.
 4. **Craft.** Click an orb to pick it up, then click an item to use it on: the rolled item, the equipped card, or any equipped slot.
-5. **Save.** Store the current equipment and rolled item in one of 3 save slots and load it back later.
+5. **Save.** From the title screen (open it with **Menu**), store your gear, rolled item and orbs in one of 3 save slots, load one back, or start a **New Game**. Gear and orbs also autosave, so **Continue** resumes your last session.
 
 ## Features
 
@@ -33,13 +33,13 @@ npm run build        # data check + type check + production build
 - **Attribute bonuses (PoE2 values):** each point of Strength gives +2 Life, Dexterity +6 Accuracy and Intelligence +2 Mana. Hovering a boosted total shows where it comes from.
 
 ### Currency orbs
-- **Drops:** rerolling past an item you didn't equip has a chance to drop an orb. The chance is 10% for Normal, 30% for Magic and 70% for Rare items. The drop plays a short burst animation that doesn't block input.
-- **Which orb:** drops are weighted Exalted (45) > Vaal (28) > Chaos (19) > Divine (8).
+- **Drops:** rerolling past an item you didn't equip rolls each orb separately, so several can drop at once. Each orb has a base chance on a Normal item, ×3 for Magic and ×7 for Rare: Exalted 4.5%, Regal 3.5%, Vaal 2.8%, Chaos 1.9%, Divine 0.8% (on a Rare: 31.5%, 24.5%, 19.6%, 13.3%, 5.6%). Drops play a short burst animation that doesn't block input.
 - **Effects:**
 
 | Orb | Effect | Works on |
 |---|---|---|
 | Exalted | Adds a new random affix | Rare items with room for another affix |
+| Regal | Upgrades to rare with a new rare name and adds a new random affix, keeping the existing ones | Magic items |
 | Chaos | Removes one random modifier and adds a new one (PoE2) | Rare items |
 | Divine | Rerolls the values of all modifiers within their ranges | Items with modifiers whose values can change |
 | Vaal | Corrupts with one of four equally likely outcomes: no change, a corrupted enchantment, modifiers swapped 1–3 times, or values rerolled | Any item |
@@ -74,7 +74,7 @@ src/
     rarity.ts          Item Rarity → drop odds
     validateData.ts    Data rules used by `npm run check:data`
   hooks/               Saving state to localStorage: equipment, saves, orbs
-  components/          UI: ItemCard, EquipmentPanel, OrbPanel, OrbTarget, OrbDropToast, StatDiff, SavePanel
+  components/          UI: ItemCard, EquipmentPanel, OrbPanel, OrbTarget, OrbDropToast, StatDiff, TitleScreen, SavePanel
 scripts/check-data.mjs Runs the data check from the command line
 ```
 

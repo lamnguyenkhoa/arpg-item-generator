@@ -1,13 +1,11 @@
-import { ORB_DROP_CHANCE, ORBS } from '../data/orbs.ts';
+import { ORB_RARITY_MULTIPLIER, ORBS } from '../data/orbs.ts';
 import type { Item, OrbDef, OrbId } from '../types.ts';
 import { chaosStep, corruptItem, rerollValue } from './corruption.ts';
-import { addableAffixes, addRandomAffix } from './generator.ts';
-import { pickWeighted } from './random.ts';
+import { addableAffixes, addRandomAffix, rareName } from './generator.ts';
 
-/** Rolls whether a discarded item drops an orb, and which one. */
-export function rollOrbDrop(item: Item): OrbDef | null {
-  return Math.random() < ORB_DROP_CHANCE[item.rarity] ? pickWeighted(ORBS) : null;
-}
+/** Rolls each orb separately for a discarded item. Returns every orb that dropped (possibly none). */
+export const rollOrbDrops = (item: Item): OrbDef[] =>
+  ORBS.filter((orb) => Math.random() < orb.dropChance * ORB_RARITY_MULTIPLIER[item.rarity]);
 
 export interface OrbResult {
   item: Item;
@@ -25,6 +23,8 @@ export function orbBlocker(orb: OrbId, item: Item): string | null {
     case 'exalted':
       if (item.rarity !== 'rare') return 'Exalted Orb only works on rare items';
       return addableAffixes(item).length ? null : 'No room for another affix';
+    case 'regal':
+      return item.rarity === 'magic' ? null : 'Regal Orb only works on magic items';
     case 'chaos':
       return item.rarity === 'rare' ? null : 'Chaos Orb only works on rare items';
     case 'divine':
@@ -39,6 +39,12 @@ export function applyOrb(orb: OrbId, item: Item): OrbResult {
   switch (orb) {
     case 'exalted':
       return { item: addRandomAffix(item), note: 'Exalted Orb: added a new affix' };
+    case 'regal':
+      // Becomes rare first so the new affix uses rare limits (3 prefixes / 3 suffixes).
+      return {
+        item: addRandomAffix({ ...item, rarity: 'rare', name: rareName() }),
+        note: 'Regal Orb: upgraded to rare with a new affix',
+      };
     case 'chaos':
       // PoE2 behaviour: swaps one random modifier for a new one.
       return { item: chaosStep(item), note: 'Chaos Orb: replaced a random modifier' };
