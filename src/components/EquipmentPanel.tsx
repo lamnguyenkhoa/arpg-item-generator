@@ -1,7 +1,8 @@
 import { EQUIP_SLOTS } from '../data/equipment.ts';
 import { propertyTotals } from '../lib/properties.ts';
 import { formatTotal, sortedStatTotals, statTotals } from '../lib/stats.ts';
-import type { EquipSlotId, Equipment } from '../types.ts';
+import { orbBlocker } from '../lib/orbs.ts';
+import type { EquipSlotId, Equipment, Item, OrbId } from '../types.ts';
 import { ItemCard } from './ItemCard.tsx';
 
 interface Props {
@@ -9,9 +10,14 @@ interface Props {
   /** Slot the current roll would go into. */
   highlight?: EquipSlotId;
   onUnequip: (slot: EquipSlotId) => void;
+  /** Orb waiting for a target; clicking an equipped slot uses it on that item. */
+  armedOrb: OrbId | null;
+  onApplyOrb: (item: Item) => void;
+  /** Last item an orb was used on, so its row can flash. */
+  orbFlash: { itemId: string; key: number; orb: OrbId } | null;
 }
 
-export function EquipmentPanel({ equipment, highlight, onUnequip }: Props) {
+export function EquipmentPanel({ equipment, highlight, onUnequip, armedOrb, onApplyOrb, orbFlash }: Props) {
   const items = Object.values(equipment);
   const properties = propertyTotals(items);
   const totals = sortedStatTotals(statTotals(items));
@@ -22,11 +28,15 @@ export function EquipmentPanel({ equipment, highlight, onUnequip }: Props) {
       <ul className="slots">
         {EQUIP_SLOTS.map((slot) => {
           const item = equipment[slot.id];
+          const blocker = armedOrb && item ? orbBlocker(armedOrb, item) : null;
+          const orbState = !armedOrb || !item ? '' : blocker ? ' orb-invalid' : ' orb-valid';
           return (
             <li
               key={slot.id}
-              className={`slot-row${slot.id === highlight ? ' highlight' : ''}`}
+              className={`slot-row${slot.id === highlight ? ' highlight' : ''}${orbState}`}
               tabIndex={item ? 0 : undefined}
+              title={blocker ?? undefined}
+              onClick={armedOrb && item && !blocker ? () => onApplyOrb(item) : undefined}
             >
               <span className="slot-label">{slot.label}</span>
               {item ? (
@@ -36,10 +46,16 @@ export function EquipmentPanel({ equipment, highlight, onUnequip }: Props) {
                     type="button"
                     className="unequip"
                     aria-label={`Unequip ${slot.label}`}
-                    onClick={() => onUnequip(slot.id)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Don't also use an armed orb on the item.
+                      onUnequip(slot.id);
+                    }}
                   >
                     ×
                   </button>
+                  {orbFlash?.itemId === item.id && (
+                    <span key={orbFlash.key} className={`orb-flash ${orbFlash.orb}`} />
+                  )}
                   <div className="slot-tooltip">
                     <ItemCard item={item} />
                   </div>

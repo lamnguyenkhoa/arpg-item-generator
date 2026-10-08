@@ -155,12 +155,56 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px 16px;
+  gap: 6px 8px;
   margin: 0;
   font-size: 0.85rem;
 }
 
-.orb { display: inline-flex; align-items: center; gap: 6px; }
+.orbs .orb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  background: #1a140e;
+  border: 1px solid #3a2e20;
+}
+.orbs .orb:disabled { opacity: 0.4; }
+.orbs .orb.armed {
+  border-color: var(--orb);
+  box-shadow: 0 0 10px var(--orb), inset 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Click targets while an orb is picked up. Outline (not border) so nothing shifts. */
+.orb-target { position: relative; }
+.orb-target.valid, .slot-row.orb-valid { cursor: crosshair; }
+.orb-target.valid .item { outline: 1px solid #e8d6a0; outline-offset: 3px; }
+.orb-target.valid:hover .item { outline-width: 2px; box-shadow: 0 0 24px rgba(232, 214, 160, 0.35); }
+.orb-target.invalid, .slot-row.orb-invalid { cursor: not-allowed; }
+.orb-target.invalid .item, .slot-row.orb-invalid .slot-item { opacity: 0.45; }
+.slot-row.orb-valid { outline: 1px solid rgba(232, 214, 160, 0.5); outline-offset: -1px; }
+.slot-row.orb-valid:hover { background: #3a2c1a; }
+
+/* Glow sweep over an item an orb was just used on. */
+.orb-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 2px var(--orb), 0 0 28px var(--orb);
+  background: radial-gradient(circle, color-mix(in srgb, var(--orb) 35%, transparent), transparent 70%);
+  opacity: 0;
+  animation: orb-flash 0.7s ease-out;
+}
+.orb-flash.exalted { --orb: #e8d6a0; }
+.orb-flash.vaal { --orb: #d04040; }
+.orb-flash.chaos { --orb: #c9a24a; }
+.orb-flash.divine { --orb: #f4f0ff; }
+
+@keyframes orb-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
 .orb.exalted { --orb: #e8d6a0; --orb-core: #fff6d8; color: var(--orb); }
 .orb.vaal { --orb: #d04040; --orb-core: #ffb0a0; color: var(--orb); }
 .orb.chaos { --orb: #c9a24a; --orb-core: #ffe9a8; color: var(--orb); }
@@ -284,7 +328,7 @@ h3 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orb-drop, .orb-drop *, .orb-count.bump { animation: none !important; }
+  .orb-drop, .orb-drop *, .orb-count.bump, .orb-flash { animation: none !important; }
   .orb-drop-rays, .orb-drop-spark { display: none; }
 }
 
@@ -465,19 +509,13 @@ h3 {
 }
 
 /* Fixed widths so changing labels ("Corrupt"/"Corrupted", slot names) don't shift neighbouring buttons. */
-button.corrupt { min-width: 160px; }
+/* Fixed width so changing slot names don't shift neighbouring buttons. */
 button.equip { min-width: 270px; }
 
-button.corrupt {
-  color: #ffd6d6;
-  background: linear-gradient(#6b1f1f, #340d0d);
-  border-color: #a33a3a;
-}
-
-.corruption-note {
+.action-note {
   min-height: 1.4em;
   margin: 0;
-  color: #e06060;
+  color: #e8d6a0;
   font-size: 0.9rem;
 }
 

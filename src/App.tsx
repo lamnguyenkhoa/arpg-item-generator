@@ -1,30 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EquipmentPanel } from './components/EquipmentPanel.tsx';
 import { ItemCard } from './components/ItemCard.tsx';
 import { OrbDropToast } from './components/OrbDropToast.tsx';
 import { OrbPanel } from './components/OrbPanel.tsx';
+import { OrbTarget } from './components/OrbTarget.tsx';
 import { SavePanel } from './components/SavePanel.tsx';
 import { StatDiff } from './components/StatDiff.tsx';
 import { slotsFor } from './data/equipment.ts';
+import { ORBS } from './data/orbs.ts';
 import { useEquipment } from './hooks/useEquipment.ts';
 import { useOrbs } from './hooks/useOrbs.ts';
 import { useSaves } from './hooks/useSaves.ts';
-import { corruptItem } from './lib/corruption.ts';
 import { generateItem } from './lib/generator.ts';
-import { rollOrbDrop } from './lib/orbs.ts';
+import { applyOrb, orbBlocker, rollOrbDrop } from './lib/orbs.ts';
 import { itemRarityFrom, rarityChances } from './lib/rarity.ts';
 import { compareItems } from './lib/stats.ts';
-import type { EquipSlotId, OrbDrop } from './types.ts';
+import type { EquipSlotId, Item, OrbDrop, OrbId } from './types.ts';
 
 export function App() {
   const { equipment, equip, unequip, replaceAll } = useEquipment();
   const itemRarity = itemRarityFrom(equipment);
   const [item, setItem] = useState(() => generateItem({ itemRarity }));
   const [chosenSlot, setChosenSlot] = useState<EquipSlotId | null>(null);
-  const [corruptionNote, setCorruptionNote] = useState<string | null>(null);
+  const [actionNote, setActionNote] = useState<string | null>(null);
   const [orbDrop, setOrbDrop] = useState<OrbDrop | null>(null);
   const { slots: saveSlots, save, remove: deleteSave } = useSaves();
-  const { orbs, addOrb } = useOrbs();
+  const { orbs, addOrb, spendOrb } = useOrbs();
+  const [armedOrb, setArmedOrb] = useState<OrbId | null>(null);
+  const [orbFlash, setOrbFlash] = useState<{ itemId: string; key: number; orb: OrbId } | null>(null);
+
+  // Esc puts the picked-up orb back.
+  useEffect(() => {
+    if (!armedOrb) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setArmedOrb(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [armedOrb]);
 
   const targets = slotsFor(item.slot);
   // Default to the first empty compatible slot (e.g. Ring 2 when Ring 1 is taken).
@@ -41,17 +52,31 @@ export function App() {
     setOrbDrop(orb && { orb, key: Date.now() });
     setItem(generateItem({ itemRarity }));
     setChosenSlot(null);
-    setCorruptionNote(null);
+    setActionNote(null);
   };
 
-  const corrupt = () => {
-    const result = corruptItem(item);
-    setItem(result.item);
-    setCorruptionNote(result.label);
-    // Keep the equipped copy in sync if this item is already worn.
-    const wornIn = (Object.keys(equipment) as EquipSlotId[]).find((slot) => equipment[slot]?.id === item.id);
-    if (wornIn) equip(wornIn, result.item);
+  /** Uses the armed orb on an item, updating both the rolled and equipped copies if it's the same item. */
+  const applyArmedOrb = (target: Item) => {
+    if (!armedOrb || orbBlocker(armedOrb, target)) return;
+    const result = applyOrb(armedOrb, target);
+    spendOrb(armedOrb);
+    if (item.id === target.id) setItem(result.item);
+    for (const slot of Object.keys(equipment) as EquipSlotId[]) {
+      if (equipment[slot]?.id === target.id) equip(slot, result.item);
+    }
+    setActionNote(result.note);
+    setOrbFlash({ itemId: target.id, key: Date.now(), orb: armedOrb });
+    // Stay armed for repeated use (like holding Shift in PoE) until this was the last one.
+    if ((orbs[armedOrb] ?? 0) <= 1) setArmedOrb(null);
   };
+
+  const armOrb = (orb: OrbId | null) => {
+    setArmedOrb(orb);
+    setActionNote(null);
+  };
+
+  const armed = ORBS.find((o) => o.id === armedOrb);
+  const flashFor = (target: Item | undefined) => (target && orbFlash?.itemId === target.id ? orbFlash : null);
 
   const equipCurrent = () => {
     equip(target.id, item);
@@ -68,22 +93,26 @@ export function App() {
     replaceAll(data.equipment);
     setItem(data.currentItem);
     setChosenSlot(null);
-    setCorruptionNote(null);
+    setActionNote(null);
     setOrbDrop(null);
   };
 
   return (
     <main className="layout">
-      <EquipmentPanel equipment={equipment} highlight={target.id} onUnequip={unequip} />
+      <EquipmentPanel
+        equipment={equipment}
+        highlight={target.id}
+        onUnequip={unequip}
+        armedOrb={armedOrb}
+        onApplyOrb={applyArmedOrb}
+        orbFlash={orbFlash}
+      />
 
       <section className="roll">
         <div className="roll-controls">
           <div className="actions">
             <button type="button" onClick={reroll}>
               Reroll
-            </button>
-            <button type="button" className="corrupt" onClick={corrupt} disabled={item.corrupted}>
-              {item.corrupted ? 'Corrupted' : 'Corrupt'}
             </button>
             <button type="button" className="equip" onClick={equipCurrent} disabled={isEquipped}>
               {isEquipped ? `Equipped to ${target.label}` : `Equip to ${target.label}`}
@@ -115,17 +144,22 @@ export function App() {
             ))}
           </p>
 
-          <OrbPanel orbs={orbs} lastDrop={orbDrop} />
+          <OrbPanel orbs={orbs} lastDrop={orbDrop} armed={armedOrb} onArm={armOrb} />
           <div className="orb-drop-slot">{orbDrop && <OrbDropToast key={orbDrop.key} orb={orbDrop.orb} />}</div>
 
           {/* Always rendered (with a min-height) so the cards below don't shift when a note appears. */}
-          <p className="corruption-note">{corruptionNote && `Vaal: ${corruptionNote}`}</p>
+          <p className="action-note">
+            {actionNote ??
+              (armed && `${armed.name}: ${armed.description}. Click an item to use it · Esc to cancel`)}
+          </p>
         </div>
 
         <div className="compare">
           <div className="column">
             <h3>Rolled</h3>
-            <ItemCard item={item} />
+            <OrbTarget armed={armedOrb} item={item} onApply={applyArmedOrb} flash={flashFor(item)}>
+              <ItemCard item={item} />
+            </OrbTarget>
           </div>
           {/* Keep the second column when equipped so the rolled card doesn't jump sideways. */}
           <div className="column">
@@ -133,7 +167,9 @@ export function App() {
             {isEquipped ? (
               <p className="empty-slot muted">Rolled item is equipped</p>
             ) : current ? (
-              <ItemCard item={current} />
+              <OrbTarget armed={armedOrb} item={current} onApply={applyArmedOrb} flash={flashFor(current)}>
+                <ItemCard item={current} />
+              </OrbTarget>
             ) : (
               <p className="empty-slot muted">Empty slot</p>
             )}

@@ -9,8 +9,8 @@ export const ORB_DROP_CHANCE: Record<RarityId, number> = {
 
 // Which orb drops is weighted: Exalted most common, Divine rarest.
 export const ORBS: OrbDef[] = [
-  { id: 'exalted', name: 'Exalted Orb', weight: 45 },
-  { id: 'vaal', name: 'Vaal Orb', weight: 28 },
-  { id: 'chaos', name: 'Chaos Orb', weight: 19 },
-  { id: 'divine', name: 'Divine Orb', weight: 8 },
+  { id: 'exalted', name: 'Exalted Orb', weight: 45, description: 'Adds a new random affix to a rare item' },
+  { id: 'vaal', name: 'Vaal Orb', weight: 28, description: 'Corrupts an item with an unpredictable outcome. Corrupted items cannot be modified further' },
+  { id: 'chaos', name: 'Chaos Orb', weight: 19, description: 'Rerolls all affixes on a rare item' },
+  { id: 'divine', name: 'Divine Orb', weight: 8, description: 'Rerolls the values of all modifiers within their ranges' },
 ];

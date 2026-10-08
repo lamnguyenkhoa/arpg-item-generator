@@ -27,5 +27,9 @@ export function useOrbs() {
     setOrbs((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
   }, []);
 
-  return { orbs, addOrb };
+  const spendOrb = useCallback((id: OrbId) => {
+    setOrbs((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) - 1) }));
+  }, []);
+
+  return { orbs, addOrb, spendOrb };
 }

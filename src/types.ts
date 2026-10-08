@@ -133,6 +133,8 @@ export interface OrbDef {
   name: string;
   /** Relative chance of this orb when an orb drops. */
   weight: number;
+  /** What the orb does, shown in its tooltip and while it's picked up. */
+  description: string;
 }
 
 export type OrbCounts = Partial<Record<OrbId, number>>;

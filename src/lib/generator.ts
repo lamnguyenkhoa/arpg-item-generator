@@ -2,7 +2,8 @@ import { BASES } from '../data/bases.ts';
 import { RARE_FIRST, RARE_SECOND } from '../data/names.ts';
 import { PREFIXES } from '../data/prefixes.ts';
 import { SUFFIXES } from '../data/suffixes.ts';
-import type { AffixDef, BaseDef, Item, ModDef, RolledMod } from '../types.ts';
+import { RARITIES } from '../data/rarities.ts';
+import type { AffixDef, BaseDef, Item, ModDef, RarityDef, RolledMod } from '../types.ts';
 
 /** Anything with a slot and base stats: a base definition or a rolled item. */
 type RollTarget = Pick<BaseDef, 'slot' | 'weapon' | 'defences'>;
@@ -41,6 +42,44 @@ export function rollAffix(affix: AffixDef, itemLevel: number): RolledMod {
   };
 }
 
+/** Rolls a fresh set of prefixes and suffixes for the given rarity. */
+export function rollAffixes(base: RollTarget, rarity: RarityDef, itemLevel: number) {
+  let prefixCount = randInt(...rarity.prefixes);
+  let suffixCount = randInt(...rarity.suffixes);
+  if (rarity.minAffixes && prefixCount + suffixCount < rarity.minAffixes) {
+    if (Math.random() < 0.5) prefixCount++;
+    else suffixCount++;
+  }
+  return {
+    prefixes: sample(affixesFor(PREFIXES, base, itemLevel), prefixCount).map((a) => rollAffix(a, itemLevel)),
+    suffixes: sample(affixesFor(SUFFIXES, base, itemLevel), suffixCount).map((a) => rollAffix(a, itemLevel)),
+  };
+}
+
+/**
+ * Affixes that could still be added to the item, grouped by prefix/suffix: they fit the base, are unlocked at its
+ * item level, aren't already on it, and the item's rarity has room for another. Empty groups are left out.
+ */
+export function addableAffixes(item: Item): { kind: 'prefixes' | 'suffixes'; defs: AffixDef[] }[] {
+  const rarity = RARITIES.find((r) => r.id === item.rarity)!;
+  const available = (pool: AffixDef[], existing: RolledMod[], max: number) =>
+    existing.length < max
+      ? affixesFor(pool, item, item.itemLevel).filter((a) => !existing.some((m) => m.text === a.text))
+      : [];
+  return [
+    { kind: 'prefixes' as const, defs: available(PREFIXES, item.prefixes, rarity.prefixes[1]) },
+    { kind: 'suffixes' as const, defs: available(SUFFIXES, item.suffixes, rarity.suffixes[1]) },
+  ].filter((o) => o.defs.length > 0);
+}
+
+/** Adds one random affix that fits (Exalted Orb style). Returns the item unchanged if there's no room. */
+export function addRandomAffix(item: Item): Item {
+  const options = addableAffixes(item);
+  if (!options.length) return item;
+  const { kind, defs } = pick(options);
+  return { ...item, [kind]: [...item[kind], rollAffix(pick(defs), item.itemLevel)] };
+}
+
 /** Magic item name: "<first prefix> <base> <first suffix>". */
 export const magicName = (baseName: string, prefixes: RolledMod[], suffixes: RolledMod[]): string =>
   [prefixes[0]?.name, baseName, suffixes[0]?.name].filter(Boolean).join(' ');
@@ -58,16 +97,8 @@ export function generateItem({ itemRarity = 0 }: GenerateOptions = {}): Item {
   const base = pick(BASES.filter((b) => b.slot === slot));
   const rarity = pickWeighted(rarityWeights(itemRarity));
 
-  let prefixCount = randInt(...rarity.prefixes);
-  let suffixCount = randInt(...rarity.suffixes);
-  if (rarity.minAffixes && prefixCount + suffixCount < rarity.minAffixes) {
-    if (Math.random() < 0.5) prefixCount++;
-    else suffixCount++;
-  }
-
   const itemLevel = randInt(1, MAX_ITEM_LEVEL);
-  const prefixes = sample(affixesFor(PREFIXES, base, itemLevel), prefixCount).map((a) => rollAffix(a, itemLevel));
-  const suffixes = sample(affixesFor(SUFFIXES, base, itemLevel), suffixCount).map((a) => rollAffix(a, itemLevel));
+  const { prefixes, suffixes } = rollAffixes(base, rarity, itemLevel);
 
   let name: string;
   switch (rarity.id) {
