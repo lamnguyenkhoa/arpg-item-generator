@@ -50,7 +50,9 @@ export interface BaseDef {
   name: string;
   slot: Slot;
   implicit?: ModDef;
+  /** Item level 1 values; scaled up by item level when rolled (see data/scaling.ts). */
   weapon?: WeaponStats;
+  /** Item level 1 values; scaled up by item level when rolled (see data/scaling.ts). */
   defences?: Defences;
 }
 
@@ -77,7 +79,7 @@ export interface Item {
   slot: Slot;
   rarity: RarityId;
   itemLevel: number;
-  /** Unmodified base stats; see lib/properties.ts for values with local mods applied. */
+  /** Base stats scaled to item level, before local mods (see lib/properties.ts for final values). */
   weapon?: WeaponStats;
   defences?: Defences;
   implicit?: RolledMod;

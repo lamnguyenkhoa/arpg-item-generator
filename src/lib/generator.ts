@@ -6,6 +6,7 @@ import { SUFFIXES } from '../data/suffixes.ts';
 import type { AffixDef, BaseDef, Item, ModDef, RolledMod } from '../types.ts';
 import { hasLocalStat } from './properties.ts';
 import { pick, pickWeighted, randInt, sample } from './random.ts';
+import { scaleDefences, scaleWeapon } from './scaling.ts';
 
 export const MAX_ITEM_LEVEL = 80;
 
@@ -72,8 +73,8 @@ export function generateItem(): Item {
     slot: base.slot,
     rarity: rarity.id,
     itemLevel,
-    weapon: base.weapon,
-    defences: base.defences,
+    weapon: base.weapon && scaleWeapon(base.weapon, itemLevel),
+    defences: base.defences && scaleDefences(base.defences, itemLevel),
     implicit: base.implicit && rollMod(base.implicit),
     prefixes,
     suffixes,

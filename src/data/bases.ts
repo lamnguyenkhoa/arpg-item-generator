@@ -4,7 +4,7 @@ export const BASES: BaseDef[] = [
   {
     name: 'Short Sword',
     slot: 'weapon',
-    weapon: { physMin: 6, physMax: 14, critChance: 5, attacksPerSecond: 1.55 },
+    weapon: { physMin: 6, physMax: 14, critChance: 8, attacksPerSecond: 1.55 },
     implicit: { text: '+{v} to Accuracy Rating', min: 40, max: 80 },
   },
   { name: 'War Axe', slot: 'weapon', weapon: { physMin: 18, physMax: 32, critChance: 5, attacksPerSecond: 1.2 } },

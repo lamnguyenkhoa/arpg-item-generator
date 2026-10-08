@@ -38,6 +38,7 @@ Errors must be fixed. Warnings should be fixed unless there is a stated design r
 | `suffixes.ts` | `SUFFIXES` | `AffixDef[]` | Suffix affixes |
 | `names.ts` | `RARE_FIRST`, `RARE_SECOND` | `string[]` | Rare item name words |
 | `rarities.ts` | `RARITIES` | `RarityDef[]` | Rarity weights and affix counts (rarely changed) |
+| `scaling.ts` | `BASE_STAT_GROWTH_PER_LEVEL` | `number` | How base damage and defences grow with item level (global balance knob) |
 | `equipment.ts` | `EQUIP_SLOTS` | `EquipSlotDef[]` | Character gear slots (code change territory, see section 7) |
 
 Valid values (these are TypeScript unions; anything else fails to compile):
@@ -146,9 +147,9 @@ Rules:
 - `name`: unique, two words, `<Material/Adjective> <ItemType>` (`Iron Hat`, `Silken Hood`, `War Axe`). It must read naturally between a prefix and a suffix.
 - Weapons have `weapon` and no `defences`. Helmet, body and gloves have `defences` and no `weapon`. Belt, ring and amulet have neither and usually have an `implicit`.
 - `implicit` is optional. Use it for jewellery, belts, and weapons with a signature trait. Armour usually has none. Don't use an implicit that duplicates the base's own stat (no `+{v} to Armour` implicit on an armour piece).
-- Base stats are fixed per base, not rolled.
+- Base stats are **item level 1 values**. When an item rolls, damage (`physMin`/`physMax`) and defences are multiplied by `1 + BASE_STAT_GROWTH_PER_LEVEL × (itemLevel − 1)` (`data/scaling.ts`; currently 0.05, about 4.95× at item level 80). `critChance` and `attacksPerSecond` never scale. Don't pre-scale values for "high-level" bases.
 
-#### 4.1 Balance bands (current game, item level 1–80)
+#### 4.1 Balance bands (item level 1 values)
 
 **Weapons**: physical DPS = `(physMin + physMax) / 2 × attacksPerSecond`.
 
@@ -158,7 +159,7 @@ Rules:
 | Balanced (sword) | 5–8 to 12–18 | 1.40–1.55 | 5 | 14–20 |
 | Slow / heavy (axe, mace) | 15–22 to 28–40 | 1.10–1.25 | 5 | 25–35 |
 
-Keep `physMin` ≥ 1 and `physMin` < `physMax`. Higher base DPS should come with a trade-off: slower speed or lower crit.
+Keep `physMin` ≥ 1 and `physMin` < `physMax`. Higher base DPS should come with a trade-off: slower speed or lower crit. Item level scaling keeps these ratios, so a slow axe always out-damages a sword *of the same item level*.
 
 **Armour pieces**: pure single-defence values:
 
