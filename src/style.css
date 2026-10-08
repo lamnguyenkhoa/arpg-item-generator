@@ -149,6 +149,143 @@ h3 {
 .chance.magic { color: var(--magic); }
 .chance.rare { color: var(--rare); }
 
+.orbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.orb { display: inline-flex; align-items: center; gap: 6px; }
+.orb.exalted { --orb: #e8d6a0; --orb-core: #fff6d8; color: var(--orb); }
+.orb.vaal { --orb: #d04040; --orb-core: #ffb0a0; color: var(--orb); }
+.orb.chaos { --orb: #c9a24a; --orb-core: #ffe9a8; color: var(--orb); }
+.orb.divine { --orb: #f4f0ff; --orb-core: #ffffff; color: var(--orb); }
+.orb-drop.exalted { --orb: #e8d6a0; --orb-core: #fff6d8; }
+.orb-drop.vaal { --orb: #d04040; --orb-core: #ffb0a0; }
+.orb-drop.chaos { --orb: #c9a24a; --orb-core: #ffe9a8; }
+.orb-drop.divine { --orb: #f4f0ff; --orb-core: #ffffff; }
+
+.orb-icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--orb-core), var(--orb) 55%, #000 120%);
+  box-shadow: 0 0 6px var(--orb);
+}
+.orb-icon.large { position: relative; width: 22px; height: 22px; box-shadow: 0 0 14px var(--orb), 0 0 28px var(--orb); }
+
+.orb-count { display: inline-block; color: var(--normal); font-weight: bold; }
+.orb-count.bump { animation: orb-bump 0.6s ease-out; }
+
+/* Fixed-height slot so the drop toast never shifts the layout. */
+.orb-drop-slot {
+  position: relative;
+  height: 1.4em;
+  width: 100%;
+  pointer-events: none;
+}
+
+.orb-drop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  animation: orb-drop-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.orb-drop-burst {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.orb-drop-burst .orb-icon.large { animation: orb-glow 1.6s ease-in-out infinite alternate; }
+
+.orb-drop-rays {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--orb) 0 6deg, transparent 6deg 30deg);
+  -webkit-mask: radial-gradient(circle, #000 15%, transparent 70%);
+  mask: radial-gradient(circle, #000 15%, transparent 70%);
+  opacity: 0;
+  animation: orb-rays 1.4s ease-out forwards;
+}
+
+.orb-drop-spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--orb-core);
+  box-shadow: 0 0 6px var(--orb);
+  opacity: 0;
+  animation: orb-spark 0.8s ease-out forwards;
+}
+
+.orb-drop-text {
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  color: var(--orb);
+  text-shadow: 0 0 8px var(--orb);
+}
+.orb-drop-text::after { content: ' dropped!'; font-weight: normal; color: var(--text); text-shadow: none; }
+
+/* Divine is the jackpot: bigger rays and a shimmer sweep across the name. */
+.orb-drop.divine .orb-drop-rays { width: 110px; height: 110px; animation-duration: 2s; }
+.orb-drop.divine .orb-drop-text {
+  background: linear-gradient(100deg, var(--orb) 40%, #ffe9a8 50%, var(--orb) 60%) 0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: orb-shimmer 1.6s linear 0.2s 2;
+}
+
+@keyframes orb-drop-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes orb-rays {
+  0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  20% { opacity: 0.7; }
+  100% { opacity: 0; transform: scale(1.2) rotate(60deg); }
+}
+
+@keyframes orb-spark {
+  0% { opacity: 1; transform: rotate(var(--angle)) translateX(6px); }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateX(34px); }
+}
+
+@keyframes orb-glow {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.35); }
+}
+
+@keyframes orb-bump {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.6); color: var(--orb); text-shadow: 0 0 8px var(--orb); }
+  100% { transform: scale(1); }
+}
+
+@keyframes orb-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-drop, .orb-drop *, .orb-count.bump { animation: none !important; }
+  .orb-drop-rays, .orb-drop-spark { display: none; }
+}
+
 .gain { color: #5fd35f; }
 .loss { color: #e05555; }
 

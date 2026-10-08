@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { EquipmentPanel } from './components/EquipmentPanel.tsx';
 import { ItemCard } from './components/ItemCard.tsx';
+import { OrbDropToast } from './components/OrbDropToast.tsx';
+import { OrbPanel } from './components/OrbPanel.tsx';
 import { SavePanel } from './components/SavePanel.tsx';
 import { StatDiff } from './components/StatDiff.tsx';
 import { slotsFor } from './data/equipment.ts';
 import { useEquipment } from './hooks/useEquipment.ts';
+import { useOrbs } from './hooks/useOrbs.ts';
 import { useSaves } from './hooks/useSaves.ts';
 import { corruptItem } from './lib/corruption.ts';
 import { generateItem } from './lib/generator.ts';
+import { rollOrbDrop } from './lib/orbs.ts';
 import { itemRarityFrom, rarityChances } from './lib/rarity.ts';
 import { compareItems } from './lib/stats.ts';
-import type { EquipSlotId } from './types.ts';
+import type { EquipSlotId, OrbDrop } from './types.ts';
 
 export function App() {
   const { equipment, equip, unequip, replaceAll } = useEquipment();
@@ -18,7 +22,9 @@ export function App() {
   const [item, setItem] = useState(() => generateItem({ itemRarity }));
   const [chosenSlot, setChosenSlot] = useState<EquipSlotId | null>(null);
   const [corruptionNote, setCorruptionNote] = useState<string | null>(null);
+  const [orbDrop, setOrbDrop] = useState<OrbDrop | null>(null);
   const { slots: saveSlots, save, remove: deleteSave } = useSaves();
+  const { orbs, addOrb } = useOrbs();
 
   const targets = slotsFor(item.slot);
   // Default to the first empty compatible slot (e.g. Ring 2 when Ring 1 is taken).
@@ -28,6 +34,11 @@ export function App() {
   const isEquipped = Object.values(equipment).some((e) => e?.id === item.id);
 
   const reroll = () => {
+    // Passing on an item without equipping it can drop an orb; rarer items drop more often.
+    const orb = isEquipped ? null : rollOrbDrop(item);
+    if (orb) addOrb(orb.id);
+    // A fresh key restarts the animation even when the same orb drops twice in a row.
+    setOrbDrop(orb && { orb, key: Date.now() });
     setItem(generateItem({ itemRarity }));
     setChosenSlot(null);
     setCorruptionNote(null);
@@ -58,6 +69,7 @@ export function App() {
     setItem(data.currentItem);
     setChosenSlot(null);
     setCorruptionNote(null);
+    setOrbDrop(null);
   };
 
   return (
@@ -100,6 +112,9 @@ export function App() {
               </span>
             ))}
           </p>
+
+          <OrbPanel orbs={orbs} lastDrop={orbDrop} />
+          <div className="orb-drop-slot">{orbDrop && <OrbDropToast key={orbDrop.key} orb={orbDrop.orb} />}</div>
 
           {/* Always rendered (with a min-height) so the cards below don't shift when a note appears. */}
           <p className="corruption-note">{corruptionNote && `Vaal: ${corruptionNote}`}</p>

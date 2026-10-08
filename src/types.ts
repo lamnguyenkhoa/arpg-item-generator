@@ -125,3 +125,20 @@ export interface SaveData {
   equipment: Equipment;
   currentItem: Item;
 }
+
+export type OrbId = 'exalted' | 'vaal' | 'chaos' | 'divine';
+
+export interface OrbDef {
+  id: OrbId;
+  name: string;
+  /** Relative chance of this orb when an orb drops. */
+  weight: number;
+}
+
+export type OrbCounts = Partial<Record<OrbId, number>>;
+
+export interface OrbDrop {
+  orb: OrbDef;
+  /** Unique per drop, used to replay the drop animation. */
+  key: number;
+}
