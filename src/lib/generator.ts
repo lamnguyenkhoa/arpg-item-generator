@@ -1,11 +1,11 @@
 import { BASES } from '../data/bases.ts';
 import { RARE_FIRST, RARE_SECOND } from '../data/names.ts';
 import { PREFIXES } from '../data/prefixes.ts';
-import { RARITIES } from '../data/rarities.ts';
 import { SUFFIXES } from '../data/suffixes.ts';
 import type { AffixDef, BaseDef, Item, ModDef, RolledMod } from '../types.ts';
 import { hasLocalStat } from './properties.ts';
 import { pick, pickWeighted, randInt, sample } from './random.ts';
+import { rarityWeights } from './rarity.ts';
 import { scaleDefences, scaleWeapon } from './scaling.ts';
 
 export const MAX_ITEM_LEVEL = 80;
@@ -38,9 +38,14 @@ function rollAffix(affix: AffixDef, itemLevel: number): RolledMod {
 
 export const formatMod = (mod: RolledMod): string => mod.text.replace('{v}', String(mod.value));
 
-export function generateItem(): Item {
+export interface GenerateOptions {
+  /** Item Rarity % from equipped gear; raises the odds of magic and rare items. */
+  itemRarity?: number;
+}
+
+export function generateItem({ itemRarity = 0 }: GenerateOptions = {}): Item {
   const base = pick(BASES);
-  const rarity = pickWeighted(RARITIES);
+  const rarity = pickWeighted(rarityWeights(itemRarity));
 
   let prefixCount = randInt(...rarity.prefixes);
   let suffixCount = randInt(...rarity.suffixes);

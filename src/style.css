@@ -135,6 +135,20 @@ h3 {
   line-height: 1.6;
 }
 
+.drop-chances {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.chance { text-transform: capitalize; }
+.chance.normal { color: var(--normal); }
+.chance.magic { color: var(--magic); }
+.chance.rare { color: var(--rare); }
+
 .gain { color: #5fd35f; }
 .loss { color: #e05555; }
 

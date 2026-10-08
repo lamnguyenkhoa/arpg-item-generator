@@ -108,4 +108,14 @@ export const PREFIXES: AffixDef[] = [
       { name: 'Shining', minLevel: 1, min: 4, max: 10 },
     ],
   },
+  {
+    // Text must match ITEM_RARITY_STAT (data/rarities.ts) to affect drop odds.
+    text: '+{v}% Item Rarity',
+    slots: ['ring'],
+    tiers: [
+      { name: "Dragon's", minLevel: 60, min: 23, max: 30 },
+      { name: "Pirate's", minLevel: 30, min: 15, max: 22 },
+      { name: "Magpie's", minLevel: 1, min: 8, max: 14 },
+    ],
+  },
 ];

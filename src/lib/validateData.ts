@@ -2,7 +2,7 @@ import { BASES } from '../data/bases.ts';
 import { EQUIP_SLOTS } from '../data/equipment.ts';
 import { RARE_FIRST, RARE_SECOND } from '../data/names.ts';
 import { PREFIXES } from '../data/prefixes.ts';
-import { RARITIES } from '../data/rarities.ts';
+import { ITEM_RARITY_STAT, RARITIES } from '../data/rarities.ts';
 import { SUFFIXES } from '../data/suffixes.ts';
 import type { AffixDef, BaseDef, EquipSlotDef, ModDef, RarityDef } from '../types.ts';
 import { canRoll, MAX_ITEM_LEVEL } from './generator.ts';
@@ -154,6 +154,16 @@ export function validateData(data: GameData = DEFAULT_DATA): Issue[] {
     if (rarity.weight <= 0) warn(where, 'weight is 0 or less, so it never drops');
     if (rarity.prefixes[0] > rarity.prefixes[1]) error(where, 'prefixes [min, max] is reversed');
     if (rarity.suffixes[0] > rarity.suffixes[1]) error(where, 'suffixes [min, max] is reversed');
+    if ((rarity.itemRarityScaling ?? 0) < 0) error(where, 'itemRarityScaling must not be negative');
+  }
+
+  const rarityTexts = [
+    ...data.bases.flatMap((b) => (b.implicit ? [b.implicit.text] : [])),
+    ...data.prefixes.map((a) => a.text),
+    ...data.suffixes.map((a) => a.text),
+  ];
+  if (!rarityTexts.includes(ITEM_RARITY_STAT)) {
+    warn('rarities', `nothing grants "${ITEM_RARITY_STAT}" (ITEM_RARITY_STAT), so Item Rarity has no source`);
   }
 
   // --- Rare names ---

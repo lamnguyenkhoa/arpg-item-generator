@@ -7,13 +7,15 @@ import { slotsFor } from './data/equipment.ts';
 import { useEquipment } from './hooks/useEquipment.ts';
 import { useSaves } from './hooks/useSaves.ts';
 import { generateItem } from './lib/generator.ts';
+import { itemRarityFrom, rarityChances } from './lib/rarity.ts';
 import { compareItems } from './lib/stats.ts';
 import type { EquipSlotId } from './types.ts';
 
 export function App() {
-  const [item, setItem] = useState(generateItem);
-  const [chosenSlot, setChosenSlot] = useState<EquipSlotId | null>(null);
   const { equipment, equip, unequip, replaceAll } = useEquipment();
+  const itemRarity = itemRarityFrom(equipment);
+  const [item, setItem] = useState(() => generateItem({ itemRarity }));
+  const [chosenSlot, setChosenSlot] = useState<EquipSlotId | null>(null);
   const { slots: saveSlots, save, remove: deleteSave } = useSaves();
 
   const targets = slotsFor(item.slot);
@@ -24,7 +26,7 @@ export function App() {
   const isEquipped = Object.values(equipment).some((e) => e?.id === item.id);
 
   const reroll = () => {
-    setItem(generateItem());
+    setItem(generateItem({ itemRarity }));
     setChosenSlot(null);
   };
 
@@ -88,6 +90,15 @@ export function App() {
             {isEquipped ? `Equipped to ${target.label}` : `Equip to ${target.label}`}
           </button>
         </div>
+
+        <p className="drop-chances">
+          <span className="muted">Item Rarity +{itemRarity}% ·</span>
+          {rarityChances(itemRarity).map((r) => (
+            <span key={r.id} className={`chance ${r.id}`}>
+              {r.id} {(r.chance * 100).toFixed(1)}%
+            </span>
+          ))}
+        </p>
       </section>
 
       <SavePanel slots={saveSlots} onSave={saveTo} onLoad={loadFrom} onDelete={deleteSave} />

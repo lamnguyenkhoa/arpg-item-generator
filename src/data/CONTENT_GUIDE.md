@@ -37,7 +37,7 @@ Errors must be fixed. Warnings should be fixed unless there is a stated design r
 | `prefixes.ts` | `PREFIXES` | `AffixDef[]` | Prefix affixes |
 | `suffixes.ts` | `SUFFIXES` | `AffixDef[]` | Suffix affixes |
 | `names.ts` | `RARE_FIRST`, `RARE_SECOND` | `string[]` | Rare item name words |
-| `rarities.ts` | `RARITIES` | `RarityDef[]` | Rarity weights and affix counts (rarely changed) |
+| `rarities.ts` | `RARITIES`, `ITEM_RARITY_STAT` | `RarityDef[]` | Rarity weights, affix counts, and how Item Rarity scales each weight (rarely changed). Any affix or implicit granting Item Rarity must use exactly `+{v}% Item Rarity`. |
 | `scaling.ts` | `BASE_STAT_GROWTH_PER_LEVEL` | `number` | How base damage and defences grow with item level (global balance knob) |
 | `equipment.ts` | `EQUIP_SLOTS` | `EquipSlotDef[]` | Character gear slots (code change territory, see section 7) |
 

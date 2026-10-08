@@ -79,4 +79,14 @@ export const SUFFIXES: AffixDef[] = [
       { name: 'of Needling', minLevel: 1, min: 10, max: 14 },
     ],
   },
+  {
+    // Text must match ITEM_RARITY_STAT (data/rarities.ts) to affect drop odds.
+    text: '+{v}% Item Rarity',
+    slots: ['helmet', 'gloves', 'amulet', 'ring'],
+    tiers: [
+      { name: 'of Plunder', minLevel: 60, min: 21, max: 28 },
+      { name: 'of Raiding', minLevel: 30, min: 13, max: 20 },
+      { name: 'of Scavenging', minLevel: 1, min: 6, max: 12 },
+    ],
+  },
 ];

@@ -62,6 +62,8 @@ export interface RarityDef {
   prefixes: [min: number, max: number];
   suffixes: [min: number, max: number];
   minAffixes?: number;
+  /** How strongly equipped Item Rarity boosts this rarity's weight. 0 = unaffected. */
+  itemRarityScaling?: number;
 }
 
 export interface RolledMod extends ModDef {
