@@ -89,15 +89,17 @@ export const formatMod = (mod: RolledMod): string => mod.text.replace('{v}', Str
 export interface GenerateOptions {
   /** Item Rarity % from equipped gear; raises the odds of magic and rare items. */
   itemRarity?: number;
+  /** Item level range to roll in. Defaults to the full 1–MAX_ITEM_LEVEL range. */
+  levelRange?: [min: number, max: number];
 }
 
-export function generateItem({ itemRarity = 0 }: GenerateOptions = {}): Item {
+export function generateItem({ itemRarity = 0, levelRange = [1, MAX_ITEM_LEVEL] }: GenerateOptions = {}): Item {
   // Pick the slot type first so slots with many bases don't drop more often.
   const slot = pick(SLOT_TYPES);
   const base = pick(BASES.filter((b) => b.slot === slot));
   const rarity = pickWeighted(rarityWeights(itemRarity));
 
-  const itemLevel = randInt(1, MAX_ITEM_LEVEL);
+  const itemLevel = randInt(...levelRange);
   const { prefixes, suffixes } = rollAffixes(base, rarity, itemLevel);
 
   let name: string;

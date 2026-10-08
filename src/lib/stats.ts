@@ -1,3 +1,4 @@
+import { ATTRIBUTE_BONUSES } from '../data/attributes.ts';
 import { STAT_EXPANSIONS } from '../data/statExpansions.ts';
 import type { Item } from '../types.ts';
 import { diffProperties, formatPropertyDelta, isLocal } from './properties.ts';
@@ -10,7 +11,8 @@ export interface StatDelta {
   delta: number;
 }
 
-export function statTotals(items: (Item | undefined)[]): StatTotals {
+/** Totals from gear modifiers only, before attribute bonuses. */
+export function gearStatTotals(items: (Item | undefined)[]): StatTotals {
   const totals: StatTotals = new Map();
   for (const item of items) {
     if (!item) continue;
@@ -24,6 +26,45 @@ export function statTotals(items: (Item | undefined)[]): StatTotals {
     }
   }
   return totals;
+}
+
+export interface AttributeBonus {
+  /** Attribute name, e.g. "Strength". */
+  name: string;
+  points: number;
+  perPoint: number;
+  amount: number;
+}
+
+/** Stats granted by attributes (e.g. Strength → Life), keyed by the granted stat text. */
+export function attributeBonuses(gearTotals: StatTotals): Map<string, AttributeBonus[]> {
+  const bonuses = new Map<string, AttributeBonus[]>();
+  for (const { name, attribute, grants, perPoint } of ATTRIBUTE_BONUSES) {
+    const points = gearTotals.get(attribute);
+    if (!points) continue;
+    bonuses.set(grants, [...(bonuses.get(grants) ?? []), { name, points, perPoint, amount: points * perPoint }]);
+  }
+  return bonuses;
+}
+
+/** Full stat totals: gear modifiers plus attribute bonuses merged into the same stats. */
+export function statTotals(items: (Item | undefined)[]): StatTotals {
+  const totals = gearStatTotals(items);
+  for (const [text, bonuses] of attributeBonuses(totals)) {
+    totals.set(text, (totals.get(text) ?? 0) + bonuses.reduce((sum, b) => sum + b.amount, 0));
+  }
+  return totals;
+}
+
+/** Hover text explaining where a total comes from, or undefined if it's all from gear. */
+export function totalBreakdown(text: string, gearTotals: StatTotals, bonuses: Map<string, AttributeBonus[]>) {
+  const fromAttributes = bonuses.get(text);
+  if (!fromAttributes) return undefined;
+  const gear = gearTotals.get(text) ?? 0;
+  return [
+    ...(gear ? [`${gear} from gear`] : []),
+    ...fromAttributes.map((b) => `${b.amount} from ${b.points} ${b.name} (×${b.perPoint})`),
+  ].join(' + ');
 }
 
 // Display order for stat totals: related stats sit together (attributes, then life/mana, defences,

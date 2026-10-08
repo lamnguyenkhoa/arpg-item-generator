@@ -7,12 +7,14 @@ import { OrbTarget } from './components/OrbTarget.tsx';
 import { SavePanel } from './components/SavePanel.tsx';
 import { StatDiff } from './components/StatDiff.tsx';
 import { slotsFor } from './data/equipment.ts';
+import { ITEM_LEVEL_SPREAD } from './data/scaling.ts';
 import { ORBS } from './data/orbs.ts';
 import { useEquipment } from './hooks/useEquipment.ts';
 import { useOrbs } from './hooks/useOrbs.ts';
 import { useSaves } from './hooks/useSaves.ts';
 import { generateItem } from './lib/generator.ts';
 import { applyOrb, orbBlocker, rollOrbDrop } from './lib/orbs.ts';
+import { averageItemLevel, dropLevelRange } from './lib/progression.ts';
 import { itemRarityFrom, rarityChances } from './lib/rarity.ts';
 import { compareItems } from './lib/stats.ts';
 import type { EquipSlotId, Item, OrbDrop, OrbId } from './types.ts';
@@ -20,7 +22,8 @@ import type { EquipSlotId, Item, OrbDrop, OrbId } from './types.ts';
 export function App() {
   const { equipment, equip, unequip, replaceAll } = useEquipment();
   const itemRarity = itemRarityFrom(equipment);
-  const [item, setItem] = useState(() => generateItem({ itemRarity }));
+  const levelRange = dropLevelRange(equipment);
+  const [item, setItem] = useState(() => generateItem({ itemRarity, levelRange }));
   const [chosenSlot, setChosenSlot] = useState<EquipSlotId | null>(null);
   const [actionNote, setActionNote] = useState<string | null>(null);
   const [orbDrop, setOrbDrop] = useState<OrbDrop | null>(null);
@@ -50,7 +53,7 @@ export function App() {
     if (orb) addOrb(orb.id);
     // A fresh key restarts the animation even when the same orb drops twice in a row.
     setOrbDrop(orb && { orb, key: Date.now() });
-    setItem(generateItem({ itemRarity }));
+    setItem(generateItem({ itemRarity, levelRange }));
     setChosenSlot(null);
     setActionNote(null);
   };
@@ -136,6 +139,12 @@ export function App() {
           </div>
 
           <p className="drop-chances">
+            <span
+              className="muted"
+              title={`Drops roll within ±${ITEM_LEVEL_SPREAD} of your average equipped item level (empty slots count as 0)`}
+            >
+              Avg ilvl {averageItemLevel(equipment)} · Drops ilvl {levelRange[0]}–{levelRange[1]} ·
+            </span>
             <span className="muted">Item Rarity +{itemRarity}% ·</span>
             {rarityChances(itemRarity).map((r) => (
               <span key={r.id} className={`chance ${r.id}`}>

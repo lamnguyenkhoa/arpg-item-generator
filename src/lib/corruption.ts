@@ -12,7 +12,7 @@ export interface CorruptionResult {
 export const rerollValue = (mod: RolledMod): RolledMod => ({ ...mod, value: randInt(mod.min, mod.max) });
 
 /** Removes one random modifier and adds a new one that fits (Chaos Orb style). */
-function chaosStep(item: Item): Item {
+export function chaosStep(item: Item): Item {
   const current = [...item.prefixes, ...item.suffixes];
   if (current.length === 0) return item; // Normal items have nothing to reroll.
 

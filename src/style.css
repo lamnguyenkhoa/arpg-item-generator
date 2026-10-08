@@ -496,6 +496,12 @@ h3 {
 
 .item .properties .value { color: var(--normal); }
 .item .properties .augmented { color: var(--mod); }
+.has-breakdown {
+  cursor: help;
+  text-decoration: underline dotted rgba(200, 200, 200, 0.4);
+  text-underline-offset: 3px;
+}
+
 .totals .property-total { color: var(--normal); }
 
 .item.is-corrupted { border-color: #6b1f1f; }

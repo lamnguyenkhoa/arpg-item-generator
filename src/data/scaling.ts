@@ -4,3 +4,9 @@
  * Attack speed and crit chance don't scale; they define the weapon archetype.
  */
 export const BASE_STAT_GROWTH_PER_LEVEL = 0.05;
+
+/**
+ * New drops roll within ± this many levels of the average equipped item level (empty slots count as 0).
+ * A fresh character gets ilvl 1–10; upgrading gear pushes the range up.
+ */
+export const ITEM_LEVEL_SPREAD = 10;

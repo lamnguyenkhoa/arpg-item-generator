@@ -1,6 +1,6 @@
 import { EQUIP_SLOTS } from '../data/equipment.ts';
 import { propertyTotals } from '../lib/properties.ts';
-import { formatTotal, sortedStatTotals, statTotals } from '../lib/stats.ts';
+import { attributeBonuses, formatTotal, gearStatTotals, sortedStatTotals, statTotals, totalBreakdown } from '../lib/stats.ts';
 import { orbBlocker } from '../lib/orbs.ts';
 import type { EquipSlotId, Equipment, Item, OrbId } from '../types.ts';
 import { ItemCard } from './ItemCard.tsx';
@@ -20,6 +20,8 @@ interface Props {
 export function EquipmentPanel({ equipment, highlight, onUnequip, armedOrb, onApplyOrb, orbFlash }: Props) {
   const items = Object.values(equipment);
   const properties = propertyTotals(items);
+  const gearTotals = gearStatTotals(items);
+  const bonuses = attributeBonuses(gearTotals);
   const totals = sortedStatTotals(statTotals(items));
 
   return (
@@ -79,7 +81,16 @@ export function EquipmentPanel({ equipment, highlight, onUnequip, armedOrb, onAp
             </li>
           ))}
           {totals.map(([text, value]) => (
-            <li key={text}>{formatTotal(text, value)}</li>
+            <li key={text}>
+              {/* Totals boosted by attributes get a hover breakdown. */}
+              {bonuses.has(text) ? (
+                <span className="has-breakdown" title={totalBreakdown(text, gearTotals, bonuses)}>
+                  {formatTotal(text, value)}
+                </span>
+              ) : (
+                formatTotal(text, value)
+              )}
+            </li>
           ))}
         </ul>
       )}

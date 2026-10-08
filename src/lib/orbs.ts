@@ -1,8 +1,7 @@
 import { ORB_DROP_CHANCE, ORBS } from '../data/orbs.ts';
-import { RARITIES } from '../data/rarities.ts';
 import type { Item, OrbDef, OrbId } from '../types.ts';
-import { corruptItem, rerollValue } from './corruption.ts';
-import { addableAffixes, addRandomAffix, rollAffixes } from './generator.ts';
+import { chaosStep, corruptItem, rerollValue } from './corruption.ts';
+import { addableAffixes, addRandomAffix } from './generator.ts';
 import { pickWeighted } from './random.ts';
 
 /** Rolls whether a discarded item drops an orb, and which one. */
@@ -40,11 +39,9 @@ export function applyOrb(orb: OrbId, item: Item): OrbResult {
   switch (orb) {
     case 'exalted':
       return { item: addRandomAffix(item), note: 'Exalted Orb: added a new affix' };
-    case 'chaos': {
-      // Keeps the rare name, like PoE.
-      const rare = RARITIES.find((r) => r.id === 'rare')!;
-      return { item: { ...item, ...rollAffixes(item, rare, item.itemLevel) }, note: 'Chaos Orb: rerolled all affixes' };
-    }
+    case 'chaos':
+      // PoE2 behaviour: swaps one random modifier for a new one.
+      return { item: chaosStep(item), note: 'Chaos Orb: replaced a random modifier' };
     case 'divine':
       return {
         item: {
