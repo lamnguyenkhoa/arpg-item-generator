@@ -85,23 +85,25 @@ export function App() {
             <button type="button" className="corrupt" onClick={corrupt} disabled={item.corrupted}>
               {item.corrupted ? 'Corrupted' : 'Corrupt'}
             </button>
-            <button type="button" onClick={equipCurrent} disabled={isEquipped}>
+            <button type="button" className="equip" onClick={equipCurrent} disabled={isEquipped}>
               {isEquipped ? `Equipped to ${target.label}` : `Equip to ${target.label}`}
             </button>
-            {targets.length > 1 && !isEquipped && (
-              <div className="slot-picker">
-                {targets.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className={s.id === target.id ? 'active' : ''}
-                    onClick={() => setChosenSlot(s.id)}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            )}
+          </div>
+
+          {/* Always rendered at a fixed height so the controls below don't jump when it's empty. */}
+          <div className="slot-picker">
+            {targets.length > 1 &&
+              !isEquipped &&
+              targets.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={s.id === target.id ? 'active' : ''}
+                  onClick={() => setChosenSlot(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
           </div>
 
           <p className="drop-chances">
@@ -125,12 +127,17 @@ export function App() {
             <h3>Rolled</h3>
             <ItemCard item={item} />
           </div>
-          {!isEquipped && (
-            <div className="column">
-              <h3>Equipped · {target.label}</h3>
-              {current ? <ItemCard item={current} /> : <p className="empty-slot muted">Empty slot</p>}
-            </div>
-          )}
+          {/* Keep the second column when equipped so the rolled card doesn't jump sideways. */}
+          <div className="column">
+            <h3>Equipped · {target.label}</h3>
+            {isEquipped ? (
+              <p className="empty-slot muted">Rolled item is equipped</p>
+            ) : current ? (
+              <ItemCard item={current} />
+            ) : (
+              <p className="empty-slot muted">Empty slot</p>
+            )}
+          </div>
         </div>
 
         {!isEquipped && <StatDiff lines={compareItems(item, current)} />}
