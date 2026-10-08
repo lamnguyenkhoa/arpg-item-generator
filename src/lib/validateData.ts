@@ -4,8 +4,9 @@ import { RARE_FIRST, RARE_SECOND } from '../data/names.ts';
 import { PREFIXES } from '../data/prefixes.ts';
 import { ITEM_RARITY_STAT, RARITIES } from '../data/rarities.ts';
 import { STAT_EXPANSIONS } from '../data/statExpansions.ts';
+import { CORRUPTED_ENCHANTS, CORRUPTION_OUTCOMES } from '../data/corruptions.ts';
 import { SUFFIXES } from '../data/suffixes.ts';
-import type { AffixDef, BaseDef, EquipSlotDef, ModDef, RarityDef } from '../types.ts';
+import type { AffixDef, BaseDef, CorruptionOutcomeDef, EnchantDef, EquipSlotDef, ModDef, RarityDef } from '../types.ts';
 import { canRoll, MAX_ITEM_LEVEL } from './generator.ts';
 
 export interface Issue {
@@ -21,6 +22,8 @@ export interface GameData {
   suffixes: AffixDef[];
   rarities: RarityDef[];
   equipSlots: EquipSlotDef[];
+  enchants: EnchantDef[];
+  corruptionOutcomes: CorruptionOutcomeDef[];
   rareNames: [first: string[], second: string[]];
   statExpansions: Record<string, string[]>;
 }
@@ -33,6 +36,8 @@ export const DEFAULT_DATA: GameData = {
   equipSlots: EQUIP_SLOTS,
   rareNames: [RARE_FIRST, RARE_SECOND],
   statExpansions: STAT_EXPANSIONS,
+  enchants: CORRUPTED_ENCHANTS,
+  corruptionOutcomes: CORRUPTION_OUTCOMES,
 };
 
 /** Standard tier count per affix (CONTENT_GUIDE.md 3.2). */
@@ -184,6 +189,20 @@ export function validateData(data: GameData = DEFAULT_DATA): Issue[] {
   if (!allStatTexts.includes(ITEM_RARITY_STAT)) {
     warn('rarities', `nothing grants "${ITEM_RARITY_STAT}" (ITEM_RARITY_STAT), so Item Rarity has no source`);
   }
+
+  // --- Corruption ---
+  for (const enchant of data.enchants) {
+    const where = `corruptions › ${enchant.text}`;
+    checkText(where, enchant.text);
+    checkRange(where, enchant);
+    if (!data.bases.some((b) => canRoll(enchant, b))) warn(where, 'no base can roll this enchant');
+  }
+  for (const slot of new Set(data.bases.map((b) => b.slot))) {
+    if (!data.bases.filter((b) => b.slot === slot).every((b) => data.enchants.some((e) => canRoll(e, b)))) {
+      warn(`corruptions › ${slot}`, 'some bases of this slot have no possible enchant, so the enchant outcome does nothing on them');
+    }
+  }
+  if (!data.corruptionOutcomes.some((o) => o.weight > 0)) error('corruptions', 'all outcome weights are 0');
 
   // --- Stat expansions ---
   for (const [combined, parts] of Object.entries(data.statExpansions)) {

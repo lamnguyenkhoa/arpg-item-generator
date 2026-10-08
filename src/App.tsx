@@ -6,6 +6,7 @@ import { StatDiff } from './components/StatDiff.tsx';
 import { slotsFor } from './data/equipment.ts';
 import { useEquipment } from './hooks/useEquipment.ts';
 import { useSaves } from './hooks/useSaves.ts';
+import { corruptItem } from './lib/corruption.ts';
 import { generateItem } from './lib/generator.ts';
 import { itemRarityFrom, rarityChances } from './lib/rarity.ts';
 import { compareItems } from './lib/stats.ts';
@@ -16,6 +17,7 @@ export function App() {
   const itemRarity = itemRarityFrom(equipment);
   const [item, setItem] = useState(() => generateItem({ itemRarity }));
   const [chosenSlot, setChosenSlot] = useState<EquipSlotId | null>(null);
+  const [corruptionNote, setCorruptionNote] = useState<string | null>(null);
   const { slots: saveSlots, save, remove: deleteSave } = useSaves();
 
   const targets = slotsFor(item.slot);
@@ -28,6 +30,16 @@ export function App() {
   const reroll = () => {
     setItem(generateItem({ itemRarity }));
     setChosenSlot(null);
+    setCorruptionNote(null);
+  };
+
+  const corrupt = () => {
+    const result = corruptItem(item);
+    setItem(result.item);
+    setCorruptionNote(result.label);
+    // Keep the equipped copy in sync if this item is already worn.
+    const wornIn = (Object.keys(equipment) as EquipSlotId[]).find((slot) => equipment[slot]?.id === item.id);
+    if (wornIn) equip(wornIn, result.item);
   };
 
   const equipCurrent = () => {
@@ -45,6 +57,7 @@ export function App() {
     replaceAll(data.equipment);
     setItem(data.currentItem);
     setChosenSlot(null);
+    setCorruptionNote(null);
   };
 
   return (
@@ -52,6 +65,46 @@ export function App() {
       <EquipmentPanel equipment={equipment} highlight={target.id} onUnequip={unequip} />
 
       <section className="roll">
+        <div className="roll-controls">
+          <div className="actions">
+            <button type="button" onClick={reroll}>
+              Reroll
+            </button>
+            <button type="button" className="corrupt" onClick={corrupt} disabled={item.corrupted}>
+              {item.corrupted ? 'Corrupted' : 'Corrupt'}
+            </button>
+            <button type="button" onClick={equipCurrent} disabled={isEquipped}>
+              {isEquipped ? `Equipped to ${target.label}` : `Equip to ${target.label}`}
+            </button>
+            {targets.length > 1 && !isEquipped && (
+              <div className="slot-picker">
+                {targets.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={s.id === target.id ? 'active' : ''}
+                    onClick={() => setChosenSlot(s.id)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="drop-chances">
+            <span className="muted">Item Rarity +{itemRarity}% ·</span>
+            {rarityChances(itemRarity).map((r) => (
+              <span key={r.id} className={`chance ${r.id}`}>
+                {r.id} {(r.chance * 100).toFixed(1)}%
+              </span>
+            ))}
+          </p>
+
+          {/* Always rendered (with a min-height) so the cards below don't shift when a note appears. */}
+          <p className="corruption-note">{corruptionNote && `Vaal: ${corruptionNote}`}</p>
+        </div>
+
         <div className="compare">
           <div className="column">
             <h3>Rolled</h3>
@@ -66,39 +119,6 @@ export function App() {
         </div>
 
         {!isEquipped && <StatDiff lines={compareItems(item, current)} />}
-
-        {targets.length > 1 && !isEquipped && (
-          <div className="slot-picker">
-            {targets.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                className={s.id === target.id ? 'active' : ''}
-                onClick={() => setChosenSlot(s.id)}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="actions">
-          <button type="button" onClick={reroll}>
-            Reroll
-          </button>
-          <button type="button" onClick={equipCurrent} disabled={isEquipped}>
-            {isEquipped ? `Equipped to ${target.label}` : `Equip to ${target.label}`}
-          </button>
-        </div>
-
-        <p className="drop-chances">
-          <span className="muted">Item Rarity +{itemRarity}% ·</span>
-          {rarityChances(itemRarity).map((r) => (
-            <span key={r.id} className={`chance ${r.id}`}>
-              {r.id} {(r.chance * 100).toFixed(1)}%
-            </span>
-          ))}
-        </p>
       </section>
 
       <SavePanel slots={saveSlots} onSave={saveTo} onLoad={loadFrom} onDelete={deleteSave} />

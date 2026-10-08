@@ -14,7 +14,7 @@ export function statTotals(items: (Item | undefined)[]): StatTotals {
   const totals: StatTotals = new Map();
   for (const item of items) {
     if (!item) continue;
-    for (const mod of [item.implicit, ...item.prefixes, ...item.suffixes]) {
+    for (const mod of [item.enchant, item.implicit, ...item.prefixes, ...item.suffixes]) {
       // Local mods are already reflected in the item's base properties.
       if (!mod || isLocal(item, mod)) continue;
       // Combined stats (e.g. all Attributes) count toward each stat they grant.

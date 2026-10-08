@@ -18,7 +18,7 @@ export function ItemCard({ item }: { item: Item }) {
   const rarityLabel = item.rarity[0]!.toUpperCase() + item.rarity.slice(1);
 
   return (
-    <article className={`item ${item.rarity}`}>
+    <article className={`item ${item.rarity}${item.corrupted ? ' is-corrupted' : ''}`}>
       <header>
         <h1>{item.name}</h1>
         {/* Rare items show the base type on a second line, like PoE/D2. */}
@@ -36,6 +36,11 @@ export function ItemCard({ item }: { item: Item }) {
       <p className="meta">
         {rarityLabel} · Item Level {item.itemLevel}
       </p>
+      {item.enchant && (
+        <ul className="enchant">
+          <ModLine mod={item.enchant} />
+        </ul>
+      )}
       {item.implicit && (
         <ul>
           <ModLine mod={item.implicit} />
@@ -48,6 +53,7 @@ export function ItemCard({ item }: { item: Item }) {
           ))}
         </ul>
       )}
+      {item.corrupted && <p className="corrupted">Corrupted</p>}
     </article>
   );
 }

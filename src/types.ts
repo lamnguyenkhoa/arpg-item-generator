@@ -66,6 +66,20 @@ export interface RarityDef {
   itemRarityScaling?: number;
 }
 
+/** A corrupted enchantment definition (see data/corruptions.ts). */
+export interface EnchantDef extends ModDef {
+  slots?: Slot[];
+  local?: LocalStat;
+}
+
+export type CorruptionOutcomeId = 'none' | 'enchant' | 'chaos' | 'values';
+
+export interface CorruptionOutcomeDef {
+  id: CorruptionOutcomeId;
+  weight: number;
+  label: string;
+}
+
 export interface RolledMod extends ModDef {
   name?: string;
   value: number;
@@ -87,6 +101,10 @@ export interface Item {
   implicit?: RolledMod;
   prefixes: RolledMod[];
   suffixes: RolledMod[];
+  /** Corrupted items can't be corrupted again. */
+  corrupted?: boolean;
+  /** Corrupted enchantment from a Vaal outcome. */
+  enchant?: RolledMod;
 }
 
 export type EquipSlotId = 'helmet' | 'amulet' | 'weapon' | 'body' | 'gloves' | 'belt' | 'ring1' | 'ring2';

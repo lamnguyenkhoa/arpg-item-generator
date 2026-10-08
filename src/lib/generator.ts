@@ -3,6 +3,9 @@ import { RARE_FIRST, RARE_SECOND } from '../data/names.ts';
 import { PREFIXES } from '../data/prefixes.ts';
 import { SUFFIXES } from '../data/suffixes.ts';
 import type { AffixDef, BaseDef, Item, ModDef, RolledMod } from '../types.ts';
+
+/** Anything with a slot and base stats: a base definition or a rolled item. */
+type RollTarget = Pick<BaseDef, 'slot' | 'weapon' | 'defences'>;
 import { hasLocalStat } from './properties.ts';
 import { pick, pickWeighted, randInt, sample } from './random.ts';
 import { rarityWeights } from './rarity.ts';
@@ -12,20 +15,20 @@ export const MAX_ITEM_LEVEL = 80;
 
 const SLOT_TYPES = [...new Set(BASES.map((b) => b.slot))];
 
-const rollMod = (mod: ModDef): RolledMod => ({ ...mod, value: randInt(mod.min, mod.max) });
+export const rollMod = (mod: ModDef): RolledMod => ({ ...mod, value: randInt(mod.min, mod.max) });
 
 const tiersFor = (affix: AffixDef, itemLevel: number) => affix.tiers.filter((t) => t.minLevel <= itemLevel);
 
-/** Whether the affix can ever roll on this base (ignoring item level). */
-export const canRoll = (affix: AffixDef, base: BaseDef): boolean =>
+/** Whether the affix (or enchant) can ever roll on this base or item (ignoring item level). */
+export const canRoll = (affix: Pick<AffixDef, 'slots' | 'local'>, base: RollTarget): boolean =>
   (!affix.slots || affix.slots.includes(base.slot)) && (!affix.local || hasLocalStat(base, affix.local));
 
 /** Affixes that fit the base and have at least one tier unlocked at this item level. */
-const affixesFor = (pool: AffixDef[], base: BaseDef, itemLevel: number) =>
+export const affixesFor = (pool: AffixDef[], base: RollTarget, itemLevel: number) =>
   pool.filter((a) => canRoll(a, base) && tiersFor(a, itemLevel).length > 0);
 
 /** Picks uniformly among unlocked tiers, so higher item levels raise the odds of top tiers. */
-function rollAffix(affix: AffixDef, itemLevel: number): RolledMod {
+export function rollAffix(affix: AffixDef, itemLevel: number): RolledMod {
   const tier = pick(tiersFor(affix, itemLevel));
   return {
     name: tier.name,
@@ -37,6 +40,10 @@ function rollAffix(affix: AffixDef, itemLevel: number): RolledMod {
     local: affix.local,
   };
 }
+
+/** Magic item name: "<first prefix> <base> <first suffix>". */
+export const magicName = (baseName: string, prefixes: RolledMod[], suffixes: RolledMod[]): string =>
+  [prefixes[0]?.name, baseName, suffixes[0]?.name].filter(Boolean).join(' ');
 
 export const formatMod = (mod: RolledMod): string => mod.text.replace('{v}', String(mod.value));
 
@@ -68,7 +75,7 @@ export function generateItem({ itemRarity = 0 }: GenerateOptions = {}): Item {
       name = `${pick(RARE_FIRST)} ${pick(RARE_SECOND)}`;
       break;
     case 'magic':
-      name = [prefixes[0]?.name, base.name, suffixes[0]?.name].filter(Boolean).join(' ');
+      name = magicName(base.name, prefixes, suffixes);
       break;
     case 'normal':
       name = base.name;

@@ -152,9 +152,24 @@ h3 {
 .gain { color: #5fd35f; }
 .loss { color: #e05555; }
 
-.slot-picker, .actions {
+.roll-controls {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.slot-picker {
+  display: flex;
+  gap: 4px;
 }
 
 .slot-picker button {
@@ -297,6 +312,29 @@ h3 {
 .item .properties .value { color: var(--normal); }
 .item .properties .augmented { color: var(--mod); }
 .totals .property-total { color: var(--normal); }
+
+.item.is-corrupted { border-color: #6b1f1f; }
+
+.item .enchant li { color: #b4b4ff; font-style: italic; }
+
+.item .corrupted {
+  margin: 0;
+  padding: 0 12px 10px;
+  color: #d20000;
+}
+
+button.corrupt {
+  color: #ffd6d6;
+  background: linear-gradient(#6b1f1f, #340d0d);
+  border-color: #a33a3a;
+}
+
+.corruption-note {
+  min-height: 1.4em;
+  margin: 0;
+  color: #e06060;
+  font-size: 0.9rem;
+}
 
 .tier {
   margin-left: 8px;

@@ -49,7 +49,7 @@ export const isLocal = (item: StatHolder, mod: RolledMod): boolean =>
   mod.local !== undefined && hasLocalStat(item, mod.local);
 
 const localPercent = (item: Item, stat: LocalStat): number =>
-  [...item.prefixes, ...item.suffixes].filter((m) => m.local === stat).reduce((sum, m) => sum + m.value, 0);
+  [item.enchant, ...item.prefixes, ...item.suffixes].reduce((sum, m) => (m?.local === stat ? sum + m.value : sum), 0);
 
 const round = (n: number, decimals: number) => Number(n.toFixed(decimals));
 
