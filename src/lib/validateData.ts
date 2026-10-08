@@ -3,6 +3,7 @@ import { EQUIP_SLOTS } from '../data/equipment.ts';
 import { RARE_FIRST, RARE_SECOND } from '../data/names.ts';
 import { PREFIXES } from '../data/prefixes.ts';
 import { ITEM_RARITY_STAT, RARITIES } from '../data/rarities.ts';
+import { STAT_EXPANSIONS } from '../data/statExpansions.ts';
 import { SUFFIXES } from '../data/suffixes.ts';
 import type { AffixDef, BaseDef, EquipSlotDef, ModDef, RarityDef } from '../types.ts';
 import { canRoll, MAX_ITEM_LEVEL } from './generator.ts';
@@ -21,6 +22,7 @@ export interface GameData {
   rarities: RarityDef[];
   equipSlots: EquipSlotDef[];
   rareNames: [first: string[], second: string[]];
+  statExpansions: Record<string, string[]>;
 }
 
 export const DEFAULT_DATA: GameData = {
@@ -30,7 +32,11 @@ export const DEFAULT_DATA: GameData = {
   rarities: RARITIES,
   equipSlots: EQUIP_SLOTS,
   rareNames: [RARE_FIRST, RARE_SECOND],
+  statExpansions: STAT_EXPANSIONS,
 };
+
+/** Standard tier count per affix (CONTENT_GUIDE.md 3.2). */
+export const STANDARD_TIER_COUNT = 5;
 
 const duplicates = (values: string[]) => [...new Set(values.filter((v, i) => values.indexOf(v) !== i))];
 
@@ -57,6 +63,10 @@ export function validateData(data: GameData = DEFAULT_DATA): Issue[] {
       if (affix.tiers.length === 0) {
         error(where, 'has no tiers');
         continue;
+      }
+
+      if (affix.tiers.length !== STANDARD_TIER_COUNT) {
+        warn(where, `has ${affix.tiers.length} tiers; the standard is ${STANDARD_TIER_COUNT}`);
       }
 
       affix.tiers.forEach((tier, i) => {
@@ -106,6 +116,15 @@ export function validateData(data: GameData = DEFAULT_DATA): Issue[] {
   };
 
   checkPool('prefixes', data.prefixes);
+
+  // Magic names are "<Prefix> <Base>", so a prefix equal to a base's first word reads "Sapphire Sapphire Ring".
+  // Base names follow PoE, so the prefix is the one to rename.
+  for (const affix of data.prefixes) {
+    for (const tier of affix.tiers) {
+      const clash = data.bases.find((b) => b.name.split(' ')[0] === tier.name && canRoll(affix, b));
+      if (clash) warn(`prefixes › ${affix.text} › "${tier.name}"`, `forms "${tier.name} ${clash.name}"; rename the prefix`);
+    }
+  }
   checkPool('suffixes', data.suffixes);
 
   // --- Bases ---
@@ -157,13 +176,25 @@ export function validateData(data: GameData = DEFAULT_DATA): Issue[] {
     if ((rarity.itemRarityScaling ?? 0) < 0) error(where, 'itemRarityScaling must not be negative');
   }
 
-  const rarityTexts = [
+  const allStatTexts = [
     ...data.bases.flatMap((b) => (b.implicit ? [b.implicit.text] : [])),
     ...data.prefixes.map((a) => a.text),
     ...data.suffixes.map((a) => a.text),
   ];
-  if (!rarityTexts.includes(ITEM_RARITY_STAT)) {
+  if (!allStatTexts.includes(ITEM_RARITY_STAT)) {
     warn('rarities', `nothing grants "${ITEM_RARITY_STAT}" (ITEM_RARITY_STAT), so Item Rarity has no source`);
+  }
+
+  // --- Stat expansions ---
+  for (const [combined, parts] of Object.entries(data.statExpansions)) {
+    const where = `statExpansions › ${combined}`;
+    checkText(where, combined);
+    parts.forEach((part) => checkText(`${where} › ${part}`, part));
+    if (!allStatTexts.includes(combined)) warn(where, 'no base or affix uses this combined stat');
+    for (const part of parts) {
+      if (!allStatTexts.includes(part)) warn(where, `"${part}" isn't used by any base or affix; check the spelling`);
+      if (data.statExpansions[part]) error(where, `"${part}" is itself a combined stat; nested expansions aren't supported`);
+    }
   }
 
   // --- Rare names ---

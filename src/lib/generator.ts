@@ -10,6 +10,8 @@ import { scaleDefences, scaleWeapon } from './scaling.ts';
 
 export const MAX_ITEM_LEVEL = 80;
 
+const SLOT_TYPES = [...new Set(BASES.map((b) => b.slot))];
+
 const rollMod = (mod: ModDef): RolledMod => ({ ...mod, value: randInt(mod.min, mod.max) });
 
 const tiersFor = (affix: AffixDef, itemLevel: number) => affix.tiers.filter((t) => t.minLevel <= itemLevel);
@@ -44,7 +46,9 @@ export interface GenerateOptions {
 }
 
 export function generateItem({ itemRarity = 0 }: GenerateOptions = {}): Item {
-  const base = pick(BASES);
+  // Pick the slot type first so slots with many bases don't drop more often.
+  const slot = pick(SLOT_TYPES);
+  const base = pick(BASES.filter((b) => b.slot === slot));
   const rarity = pickWeighted(rarityWeights(itemRarity));
 
   let prefixCount = randInt(...rarity.prefixes);

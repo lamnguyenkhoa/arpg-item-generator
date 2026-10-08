@@ -38,6 +38,7 @@ Errors must be fixed. Warnings should be fixed unless there is a stated design r
 | `suffixes.ts` | `SUFFIXES` | `AffixDef[]` | Suffix affixes |
 | `names.ts` | `RARE_FIRST`, `RARE_SECOND` | `string[]` | Rare item name words |
 | `rarities.ts` | `RARITIES`, `ITEM_RARITY_STAT` | `RarityDef[]` | Rarity weights, affix counts, and how Item Rarity scales each weight (rarely changed). Any affix or implicit granting Item Rarity must use exactly `+{v}% Item Rarity`. |
+| `statExpansions.ts` | `STAT_EXPANSIONS` | `Record<string, string[]>` | Combined stats and the individual stats they count as (see 2.6) |
 | `scaling.ts` | `BASE_STAT_GROWTH_PER_LEVEL` | `number` | How base damage and defences grow with item level (global balance knob) |
 | `equipment.ts` | `EQUIP_SLOTS` | `EquipSlotDef[]` | Character gear slots (code change territory, see section 7) |
 
@@ -66,6 +67,7 @@ Valid values (these are TypeScript unions; anything else fails to compile):
 
 4. Title Case for stat names (`Maximum Life`, `Evasion Rating`, `Energy Shield`). British spelling for `Armour`, matching existing data.
 5. Values are integers. Don't write decimals in ranges.
+6. **Combined stats** that grant several stats at once (`+{v} to all Attributes`) must be listed in `statExpansions.ts`, mapping to the exact individual stat texts. Then they add into each stat's totals and comparisons. Without an entry, a combined stat is display-only.
 
 ### 3. Affixes (`prefixes.ts`, `suffixes.ts`)
 
@@ -75,9 +77,11 @@ Valid values (these are TypeScript unions; anything else fails to compile):
   slots: ['helmet', 'body'],      // optional: omit = can roll on any slot
   local: 'armour',                // optional: see 3.3
   tiers: [                        // strongest first (T1 at index 0)
-    { name: 'Stalwart', minLevel: 60, min: 45, max: 70 },
-    { name: 'Sanguine', minLevel: 30, min: 25, max: 44 },
-    { name: 'Healthy',  minLevel: 1,  min: 10, max: 24 },
+    { name: 'Virile',   minLevel: 72, min: 58, max: 70 },
+    { name: 'Robust',   minLevel: 54, min: 46, max: 57 },
+    { name: 'Stalwart', minLevel: 36, min: 34, max: 45 },
+    { name: 'Sanguine', minLevel: 18, min: 22, max: 33 },
+    { name: 'Healthy',  minLevel: 1,  min: 10, max: 21 },
   ],
 },
 ```
@@ -96,11 +100,11 @@ When unsure, look for similar stats in the existing files and match them.
 | Rule | Detail |
 |-|-|
 | Order | Strongest first. `minLevel` strictly decreasing; `min` and `max` never increase down the list. |
-| Count | 3 tiers is standard. 2–5 is allowed. |
-| Levels | Lowest tier **must** be `minLevel: 1`. Standard spacing: `1 / 25–30 / 55–60`. For 4–5 tiers, keep at least 10 levels between tiers, highest no more than 75. |
-| Ranges | Contiguous and non-overlapping where possible: the next-stronger tier starts at previous `max + 1`. For very small values (1–3) a 1-point overlap is fine (see leech). |
+| Count | **Exactly 5 tiers** (the data check warns otherwise). |
+| Levels | Always `72 / 54 / 36 / 18 / 1` (T1 → T5). The lowest tier **must** be `minLevel: 1`. |
+| Ranges | Contiguous and non-overlapping: the next-stronger tier starts at the previous `max + 1`. Pick the T5 `min` and T1 `max`, then split the span into 5 roughly equal ranges. The span must be at least 10 values wide so every tier gets 2 or more values. |
 | Spread | T1 `max` is roughly 5–7× the lowest tier's `min` (e.g. Life 10 → 70, Strength 5 → 30, Armour % 10 → 60). |
-| Names | Every tier has its own name. Names must be unique across the whole file (prefixes and suffixes are checked separately). |
+| Names | Every tier has its own name, preferably from PoE's ladder for that stat, weakest → strongest. Names must be unique across the whole file (prefixes and suffixes are checked separately). |
 
 #### 3.3 Local affixes (`local`)
 
@@ -124,7 +128,7 @@ A `local` affix modifies the item's own base stat instead of the character. It i
 | Used as | `<Prefix> <Base>` → `Heavy War Axe` | `<Base> <Suffix>` → `War Axe of the Bear` |
 | Tone | Weak tiers mundane (`Heated`, `Healthy`), strong tiers evocative (`Merciless`, `Stalwart`) | Weak: humble animals or nouns (`of the Brute`, `of the Seal`); strong: powerful ones (`of the Lion`, `of the Glacier`) |
 
-Names must read well in both magic item patterns. Avoid real-world brands, people, slurs, and names that already exist in the file. Use straight apostrophes inside double-quoted strings: `"Ghost's"`.
+Names must read well in both magic item patterns, and must not equal the first word of a base they can roll on (see 4). Avoid real-world brands, people, slurs, and names that already exist in the file. Use straight apostrophes inside double-quoted strings: `"Ghost's"`.
 
 ### 4. Bases (`bases.ts`)
 
@@ -144,7 +148,8 @@ Names must read well in both magic item patterns. Avoid real-world brands, peopl
 
 Rules:
 
-- `name`: unique, two words, `<Material/Adjective> <ItemType>` (`Iron Hat`, `Silken Hood`, `War Axe`). It must read naturally between a prefix and a suffix.
+- `name`: unique, and **use real Path of Exile base names** (PoE1 or PoE2) that match the slot and defence type. For example `Iron Hat` (Armour helmet), `Silken Hood` (Evasion helmet), `Scare Mask` (Evasion/ES), `Sapphire Ring` (cold res implicit), `Onyx Amulet` (all attributes). Match the PoE implicit's stat where our stat texts allow it. Only invent a name when PoE has no fitting base.
+- Base names take priority over affix names. If a prefix name equals a base's first word (`Sapphire` + `Sapphire Ring`), rename the **prefix**, using the next name from PoE's affix ladder (e.g. mana: Beryl, Cobalt, Azure, Sapphire, Cerulean). The data check warns about these clashes.
 - Weapons have `weapon` and no `defences`. Helmet, body and gloves have `defences` and no `weapon`. Belt, ring and amulet have neither and usually have an `implicit`.
 - `implicit` is optional. Use it for jewellery, belts, and weapons with a signature trait. Armour usually has none. Don't use an implicit that duplicates the base's own stat (no `+{v} to Armour` implicit on an armour piece).
 - Base stats are **item level 1 values**. When an item rolls, damage (`physMin`/`physMax`) and defences are multiplied by `1 + BASE_STAT_GROWTH_PER_LEVEL × (itemLevel − 1)` (`data/scaling.ts`; currently 0.05, about 4.95× at item level 80). `critChance` and `attacksPerSecond` never scale. Don't pre-scale values for "high-level" bases.
@@ -173,7 +178,7 @@ Keep `physMin` ≥ 1 and `physMin` < `physMax`. Higher base DPS should come with
 - **Hybrid** bases (two defences) get about 60–75% of each pure value. For example, a body with 90 armour and 25 ES.
 - Don't create three-defence bases.
 
-**Implicits**: roughly half to two-thirds of an equivalent mid-tier (T2) affix range.
+**Implicits**: roughly the range of an equivalent mid-tier (T3) affix.
 
 #### 4.2 Coverage
 
@@ -188,7 +193,7 @@ Every base must be able to roll enough prefixes and suffixes for rare items (at 
 ### 6. Checklist before finishing
 
 - [ ] Stat `text` reuses existing wording where the stat already exists, and has exactly one `{v}`.
-- [ ] Tiers are strongest first, lowest tier at `minLevel: 1`, ranges ascending toward T1, integers only.
+- [ ] Exactly 5 tiers at levels 72 / 54 / 36 / 18 / 1, strongest first, contiguous ranges ascending toward T1, integers only.
 - [ ] Tier names are unique in their file; suffix names start with `of `.
 - [ ] `local` affixes have no `slots`; any global twin has a non-overlapping `slots` list.
 - [ ] Base names are unique; weapon or defence values are inside the balance bands.

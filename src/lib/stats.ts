@@ -1,3 +1,4 @@
+import { STAT_EXPANSIONS } from '../data/statExpansions.ts';
 import type { Item } from '../types.ts';
 import { diffProperties, formatPropertyDelta, isLocal } from './properties.ts';
 
@@ -16,7 +17,10 @@ export function statTotals(items: (Item | undefined)[]): StatTotals {
     for (const mod of [item.implicit, ...item.prefixes, ...item.suffixes]) {
       // Local mods are already reflected in the item's base properties.
       if (!mod || isLocal(item, mod)) continue;
-      totals.set(mod.text, (totals.get(mod.text) ?? 0) + mod.value);
+      // Combined stats (e.g. all Attributes) count toward each stat they grant.
+      for (const text of STAT_EXPANSIONS[mod.text] ?? [mod.text]) {
+        totals.set(text, (totals.get(text) ?? 0) + mod.value);
+      }
     }
   }
   return totals;
