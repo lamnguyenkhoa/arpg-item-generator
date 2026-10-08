@@ -1,6 +1,6 @@
 import { EQUIP_SLOTS } from '../data/equipment.ts';
 import { propertyTotals } from '../lib/properties.ts';
-import { formatTotal, statTotals } from '../lib/stats.ts';
+import { formatTotal, sortedStatTotals, statTotals } from '../lib/stats.ts';
 import type { EquipSlotId, Equipment } from '../types.ts';
 import { ItemCard } from './ItemCard.tsx';
 
@@ -14,7 +14,7 @@ interface Props {
 export function EquipmentPanel({ equipment, highlight, onUnequip }: Props) {
   const items = Object.values(equipment);
   const properties = propertyTotals(items);
-  const totals = [...statTotals(items)];
+  const totals = sortedStatTotals(statTotals(items));
 
   return (
     <aside className="panel equipment">

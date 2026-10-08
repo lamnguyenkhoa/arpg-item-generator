@@ -58,6 +58,7 @@ export const SUFFIXES: AffixDef[] = [
   },
   {
     text: '+{v}% to Fire Resistance',
+    slots: ['helmet', 'body', 'gloves', 'belt', 'ring', 'amulet'],
     tiers: [
       { name: 'of the Volcano', minLevel: 72, min: 34, max: 40 },
       { name: 'of the Kiln', minLevel: 54, min: 27, max: 33 },
@@ -68,6 +69,7 @@ export const SUFFIXES: AffixDef[] = [
   },
   {
     text: '+{v}% to Cold Resistance',
+    slots: ['helmet', 'body', 'gloves', 'belt', 'ring', 'amulet'],
     tiers: [
       { name: 'of the Polar Bear', minLevel: 72, min: 34, max: 40 },
       { name: 'of the Walrus', minLevel: 54, min: 27, max: 33 },
@@ -78,6 +80,7 @@ export const SUFFIXES: AffixDef[] = [
   },
   {
     text: '+{v}% to Lightning Resistance',
+    slots: ['helmet', 'body', 'gloves', 'belt', 'ring', 'amulet'],
     tiers: [
       { name: 'of the Tempest', minLevel: 72, min: 34, max: 40 },
       { name: 'of the Thunderhead', minLevel: 54, min: 27, max: 33 },

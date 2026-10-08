@@ -26,6 +26,29 @@ export function statTotals(items: (Item | undefined)[]): StatTotals {
   return totals;
 }
 
+// Display order for stat totals: related stats sit together (attributes, then life/mana, defences,
+// resistances, damage, speed/crit, utility). Earlier patterns win; unmatched stats go last.
+const STAT_ORDER: RegExp[] = [
+  /Strength/, /Dexterity/, /Intelligence/,
+  /Maximum Life/, /Life per second/, /Life gained/, /Leeched as Life/,
+  /Maximum Mana/, /Mana Regeneration/,
+  /Armour/, /Evasion/, /Energy Shield/,
+  /Fire Resistance/, /Cold Resistance/, /Lightning Resistance/, /Resistance/,
+  /Adds .* Physical Damage/, /Adds .* Fire Damage/, /Adds .* Cold Damage/, /Adds .* Lightning Damage/, /Adds /,
+  /Physical Damage/, /Damage/,
+  /Attack Speed/, /Accuracy/, /Critical/,
+  /Rarity/,
+];
+
+const statRank = (text: string): number => {
+  const i = STAT_ORDER.findIndex((re) => re.test(text));
+  return i === -1 ? STAT_ORDER.length : i;
+};
+
+/** Totals as entries, grouped so related stats are listed next to each other. */
+export const sortedStatTotals = (totals: StatTotals): [string, number][] =>
+  [...totals].sort(([a], [b]) => statRank(a) - statRank(b));
+
 /** Stat changes from replacing `current` with `candidate`. Unchanged stats are omitted. */
 export function diffStats(candidate: Item, current: Item | undefined): StatDelta[] {
   const next = statTotals([candidate]);
@@ -33,7 +56,8 @@ export function diffStats(candidate: Item, current: Item | undefined): StatDelta
   const keys = new Set([...next.keys(), ...prev.keys()]);
   return [...keys]
     .map((text) => ({ text, delta: (next.get(text) ?? 0) - (prev.get(text) ?? 0) }))
-    .filter((d) => d.delta !== 0);
+    .filter((d) => d.delta !== 0)
+    .sort((a, b) => statRank(a.text) - statRank(b.text));
 }
 
 export const formatTotal = (text: string, value: number): string => text.replace('{v}', String(value));
