@@ -270,6 +270,31 @@ h3 {
   cursor: help;
 }
 
+.item .properties {
+  padding-top: 10px;
+  padding-bottom: 0;
+}
+
+.item .properties li {
+  color: var(--muted);
+  cursor: default;
+}
+
+.item .properties .value { color: var(--normal); }
+.item .properties .augmented { color: var(--mod); }
+.totals .property-total { color: var(--normal); }
+
+.tier {
+  margin-left: 8px;
+  padding: 0 4px;
+  font-size: 0.7rem;
+  vertical-align: middle;
+  color: var(--muted);
+  border: 1px solid #3a3025;
+}
+
+.tier.t1 { color: #e8b04a; border-color: #8a6d40; }
+
 button {
   font: inherit;
   font-size: 1rem;

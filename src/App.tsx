@@ -7,7 +7,7 @@ import { slotsFor } from './data/equipment.ts';
 import { useEquipment } from './hooks/useEquipment.ts';
 import { useSaves } from './hooks/useSaves.ts';
 import { generateItem } from './lib/generator.ts';
-import { diffStats } from './lib/stats.ts';
+import { compareItems } from './lib/stats.ts';
 import type { EquipSlotId } from './types.ts';
 
 export function App() {
@@ -63,7 +63,7 @@ export function App() {
           )}
         </div>
 
-        {!isEquipped && <StatDiff deltas={diffStats(item, current)} />}
+        {!isEquipped && <StatDiff lines={compareItems(item, current)} />}
 
         {targets.length > 1 && !isEquipped && (
           <div className="slot-picker">

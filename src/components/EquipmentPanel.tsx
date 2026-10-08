@@ -1,4 +1,5 @@
 import { EQUIP_SLOTS } from '../data/equipment.ts';
+import { propertyTotals } from '../lib/properties.ts';
 import { formatTotal, statTotals } from '../lib/stats.ts';
 import type { EquipSlotId, Equipment } from '../types.ts';
 import { ItemCard } from './ItemCard.tsx';
@@ -11,7 +12,9 @@ interface Props {
 }
 
 export function EquipmentPanel({ equipment, highlight, onUnequip }: Props) {
-  const totals = [...statTotals(Object.values(equipment))];
+  const items = Object.values(equipment);
+  const properties = propertyTotals(items);
+  const totals = [...statTotals(items)];
 
   return (
     <aside className="panel equipment">
@@ -50,10 +53,15 @@ export function EquipmentPanel({ equipment, highlight, onUnequip }: Props) {
       </ul>
 
       <h3>Total Stats</h3>
-      {totals.length === 0 ? (
+      {totals.length === 0 && properties.length === 0 ? (
         <p className="muted">Nothing equipped</p>
       ) : (
         <ul className="totals">
+          {properties.map((p) => (
+            <li key={p.key} className="property-total">
+              {p.label}: {p.text}
+            </li>
+          ))}
           {totals.map(([text, value]) => (
             <li key={text}>{formatTotal(text, value)}</li>
           ))}

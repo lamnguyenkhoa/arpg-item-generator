@@ -9,17 +9,49 @@ export interface ModDef {
   max: number;
 }
 
-export interface AffixDef extends ModDef {
+export interface AffixTier {
   /** Used in magic item names, e.g. "Heavy" or "of the Bear". */
   name: string;
+  /** Minimum item level required to roll this tier. */
+  minLevel: number;
+  min: number;
+  max: number;
+}
+
+/** Base stats an item can have, which local affixes modify. */
+export type LocalStat = 'physicalDamage' | 'attackSpeed' | 'armour' | 'evasion' | 'energyShield';
+
+export interface WeaponStats {
+  physMin: number;
+  physMax: number;
+  /** Percent, e.g. 5 = 5%. */
+  critChance: number;
+  attacksPerSecond: number;
+}
+
+export interface Defences {
+  armour?: number;
+  evasion?: number;
+  energyShield?: number;
+}
+
+export interface AffixDef {
+  /** Contains `{v}` where the rolled value goes. Also the key used to stack stats. */
+  text: string;
+  /** Strongest first: tiers[0] is T1. */
+  tiers: AffixTier[];
   /** Slots this affix can roll on. Omit for any slot. */
   slots?: Slot[];
+  /** Local affixes modify the item's own base stat and only roll on bases that have it. */
+  local?: LocalStat;
 }
 
 export interface BaseDef {
   name: string;
   slot: Slot;
-  implicit: ModDef;
+  implicit?: ModDef;
+  weapon?: WeaponStats;
+  defences?: Defences;
 }
 
 export interface RarityDef {
@@ -33,6 +65,9 @@ export interface RarityDef {
 export interface RolledMod extends ModDef {
   name?: string;
   value: number;
+  /** 1 = best. Absent on implicits. */
+  tier?: number;
+  local?: LocalStat;
 }
 
 export interface Item {
@@ -42,7 +77,10 @@ export interface Item {
   slot: Slot;
   rarity: RarityId;
   itemLevel: number;
-  implicit: RolledMod;
+  /** Unmodified base stats; see lib/properties.ts for values with local mods applied. */
+  weapon?: WeaponStats;
+  defences?: Defences;
+  implicit?: RolledMod;
   prefixes: RolledMod[];
   suffixes: RolledMod[];
 }
